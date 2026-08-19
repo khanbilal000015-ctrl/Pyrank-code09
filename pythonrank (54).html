@@ -1,0 +1,2927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PythonRank — Learn. Code. Climb.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<style>
+  :root{
+    --bg:#0f141b;
+    --bg-soft:#131a23;
+    --panel:#161e29;
+    --panel-alt:#1c2531;
+    --border:#28333f;
+    --border-soft:#20293380;
+    --text:#e7edf3;
+    --muted:#8a97a6;
+    --blue:#4b8bbe;
+    --blue-dim:#2f5a7d;
+    --yellow:#ffd43b;
+    --green:#3ddc84;
+    --red:#ff5c5c;
+    --radius:10px;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.55;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--border-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border-soft) 1px, transparent 1px);
+    background-size:40px 40px;
+    opacity:.35;
+    pointer-events:none;
+    z-index:0;
+  }
+  a{color:var(--yellow); text-decoration:none;}
+  code, pre, .mono{font-family:var(--mono);}
+  h1,h2,h3,h4{font-family:var(--mono); margin:0 0 .4em; letter-spacing:-.01em;}
+  button{font-family:var(--sans); cursor:pointer;}
+  ::selection{background:var(--blue-dim); color:#fff;}
+
+  /* ---------- Skip link / focus ---------- */
+  .skip-link{position:absolute; left:-999px; top:0; background:var(--yellow); color:#111; padding:8px 14px; border-radius:6px; z-index:200;}
+  .skip-link:focus{left:8px; top:8px;}
+  :focus-visible{outline:2px solid var(--yellow); outline-offset:2px;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; gap:18px;
+    padding:12px 22px;
+    background:rgba(15,20,27,.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; white-space:nowrap;}
+  .brand small{color:var(--muted); font-family:var(--sans); font-weight:500; font-size:.72rem;}
+
+  /* ---------- Animated python-mark ---------- */
+  .py-mark{width:26px; height:26px; flex-shrink:0; overflow:visible;}
+  .py-mark .coil{transform-origin:13px 13px; animation:coil-sway 3.2s ease-in-out infinite;}
+  .py-mark .coil.b{animation-delay:.15s;}
+  .py-mark .eye{animation:eye-blink 4.5s ease-in-out infinite;}
+  @keyframes coil-sway{
+    0%,100%{transform:rotate(-4deg) translateY(0);}
+    50%{transform:rotate(4deg) translateY(-1px);}
+  }
+  @keyframes eye-blink{
+    0%,92%,100%{transform:scaleY(1);}
+    96%{transform:scaleY(.15);}
+  }
+
+  /* ---------- Icon buttons (fullscreen etc.) ---------- */
+  .icon-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:8px;
+    background:var(--panel); border:1px solid var(--border); color:var(--muted);
+    flex-shrink:0;
+  }
+  .icon-btn:hover{color:var(--yellow); border-color:var(--blue);}
+  .icon-btn svg{width:16px; height:16px;}
+  .top-actions{display:flex; align-items:center; gap:10px;}
+
+  nav.tabs{display:flex; gap:4px; flex:1; overflow-x:auto;}
+  nav.tabs button{
+    background:none; border:1px solid transparent; color:var(--muted);
+    padding:8px 13px; border-radius:8px; font-size:.86rem; font-weight:600;
+    font-family:var(--mono);
+  }
+  nav.tabs button:hover{color:var(--text); border-color:var(--border);}
+  nav.tabs button.active{color:var(--bg); background:var(--yellow);}
+
+  .status-card{
+    font-family:var(--mono); font-size:.72rem; color:var(--green);
+    background:#0a0f14; border:1px solid var(--border); border-radius:8px;
+    padding:7px 12px; white-space:nowrap; line-height:1.4;
+  }
+  .status-card .cursor{display:inline-block; width:6px; height:11px; background:var(--green); margin-left:2px; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .status-card b{color:var(--yellow);}
+
+  main{position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:34px 22px 90px;}
+  section{display:none;}
+  section.active{display:block; animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  .eyebrow{font-family:var(--mono); color:var(--yellow); font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px;}
+  .lede{color:var(--muted); max-width:640px;}
+
+  /* ---------- Home / Hero ---------- */
+  .hero{display:grid; grid-template-columns:1.1fr .9fr; gap:36px; align-items:center; padding:20px 0 44px;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .hero h1{font-size:2.5rem; line-height:1.12; margin-bottom:14px;}
+  .hero h1 .hl{color:var(--yellow);}
+  .hero-ctas{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap;}
+  .btn{
+    font-family:var(--mono); font-weight:700; font-size:.86rem;
+    padding:11px 18px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel); color:var(--text); transition:transform .12s, border-color .12s;
+  }
+  .btn:hover{transform:translateY(-1px); border-color:var(--blue);}
+  .btn.primary{background:var(--yellow); color:#101418; border-color:var(--yellow);}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:7px 12px; font-size:.76rem;}
+  .btn.danger{background:transparent; border-color:var(--red); color:var(--red);}
+
+  .terminal{
+    background:#0a0f14; border:1px solid var(--border); border-radius:var(--radius);
+    overflow:hidden; box-shadow:0 20px 60px -20px #000;
+  }
+  .terminal .bar{display:flex; gap:7px; padding:10px 12px; background:#0d1319; border-bottom:1px solid var(--border);}
+  .terminal .bar span{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .terminal .bar span:nth-child(1){background:#ff5f56;}
+  .terminal .bar span:nth-child(2){background:#ffbd2e;}
+  .terminal .bar span:nth-child(3){background:#27c93f;}
+  .terminal .body{padding:16px 18px; font-family:var(--mono); font-size:.86rem; min-height:170px;}
+  .terminal .body .line{color:var(--muted); margin-bottom:4px;}
+  .terminal .body .out{color:var(--green);}
+  #typeTarget::after{content:"▌"; animation:blink 1s steps(1) infinite; color:var(--yellow);}
+
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:36px;}
+  .stat{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px;}
+  .stat .n{font-family:var(--mono); font-size:1.7rem; font-weight:800; color:var(--yellow);}
+  .stat .l{color:var(--muted); font-size:.82rem;}
+
+  /* signature: rank ladder */
+  .ladder-wrap{margin-top:52px;}
+  .ladder{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px 24px; position:relative;
+  }
+  .ladder h3{margin-bottom:16px;}
+  .rung{
+    display:grid; grid-template-columns:26px 1fr auto; gap:12px; align-items:center;
+    padding:10px 6px; border-left:2px solid var(--border); margin-left:12px; position:relative;
+  }
+  .rung::before{
+    content:""; position:absolute; left:-7px; top:50%; transform:translateY(-50%);
+    width:12px; height:12px; border-radius:50%; background:var(--bg-soft); border:2px solid var(--border);
+  }
+  .rung.done::before{background:var(--green); border-color:var(--green);}
+  .rung.current::before{background:var(--yellow); border-color:var(--yellow); box-shadow:0 0 0 4px #ffd43b26;}
+  .rung .tier-tag{font-family:var(--mono); font-size:.7rem; color:var(--muted);}
+  .rung .tier-name{font-weight:700;}
+  .rung.current .tier-name{color:var(--yellow);}
+  .rung .tier-score{font-family:var(--mono); font-size:.76rem; color:var(--muted);}
+
+  /* ---------- Cards / grids ---------- */
+  .grid{display:grid; gap:16px;}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:760px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr;}}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px;}
+  .card h4{font-size:1rem;}
+  .tag{display:inline-block; font-family:var(--mono); font-size:.68rem; padding:3px 8px; border-radius:5px; background:var(--panel-alt); color:var(--blue); border:1px solid var(--border); text-transform:uppercase; letter-spacing:.05em;}
+
+  /* ---------- Compiler ---------- */
+  .compiler-layout{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:860px){.compiler-layout{grid-template-columns:1fr;}}
+  .editor-pane, .output-pane{background:#0a0f14; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column; transition:border-color .25s, box-shadow .25s;}
+  .run-status-dot{width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:7px; background:var(--muted); transition:background .2s, box-shadow .2s;}
+  .run-status-dot.ok{background:var(--green); box-shadow:0 0 7px var(--green);}
+  .run-status-dot.err{background:var(--red); box-shadow:0 0 7px var(--red);}
+  .output-pane.status-ok{border-color:var(--green); box-shadow:0 0 0 1px #3ddc8433;}
+  .output-pane.status-err{border-color:var(--red); box-shadow:0 0 0 1px #ff5c5c33;}
+  #errorExplainBox{
+    margin:0 12px 12px; padding:12px 14px; background:var(--panel-alt);
+    border:1px solid var(--blue-dim); border-left:3px solid var(--blue);
+    border-radius:8px; font-family:var(--mono); font-size:.8rem; line-height:1.6;
+  }
+  #errorExplainBox .exp-title{color:var(--blue); font-weight:700; margin-bottom:4px; display:block;}
+  .pane-head{display:flex; justify-content:space-between; align-items:center; padding:9px 14px; background:#0d1319; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:.75rem; color:var(--muted);}
+  #codeInput, #interviewCodeInput, #studioCodeInput{ display:none; }
+  .editor-pane .CodeMirror{
+    height:400px !important; background:transparent !important; color:var(--text);
+    font-family:var(--mono); font-size:.88rem; line-height:1.6;
+  }
+  .editor-pane .CodeMirror-gutters{background:transparent !important; border-right:1px solid var(--border);}
+  .editor-pane .CodeMirror-linenumber{color:#3d4a58;}
+  .editor-pane .CodeMirror-cursor{border-left:1.5px solid var(--text);}
+  .editor-pane .CodeMirror-selected{background:#4b8bbe33 !important;}
+  .editor-pane .CodeMirror-matchingbracket{color:var(--yellow) !important; font-weight:700;}
+  .editor-pane .CodeMirror-vscrollbar, .editor-pane .CodeMirror-hscrollbar, .editor-pane .CodeMirror-scrollbar-filler{
+    display:none !important;
+  }
+  .editor-pane .CodeMirror-scroll{margin-bottom:0; margin-right:0; overflow:auto !important;}
+  /* syntax colors */
+  .cm-s-pythonrank .cm-keyword{color:#ff79c6;}
+  .cm-s-pythonrank .cm-def{color:#4b8bbe; font-weight:600;}
+  .cm-s-pythonrank .cm-variable{color:var(--text);}
+  .cm-s-pythonrank .cm-variable-2{color:var(--text);}
+  .cm-s-pythonrank .cm-property{color:#79b8ff;}
+  .cm-s-pythonrank .cm-string, .cm-s-pythonrank .cm-string-2{color:var(--green);}
+  .cm-s-pythonrank .cm-number{color:var(--yellow);}
+  .cm-s-pythonrank .cm-comment{color:var(--muted); font-style:italic;}
+  .cm-s-pythonrank .cm-operator{color:#ff9e64;}
+  .cm-s-pythonrank .cm-builtin{color:#79b8ff;}
+  .cm-s-pythonrank .cm-atom{color:var(--yellow);}
+  .cm-s-pythonrank .cm-meta{color:var(--blue);}
+  .cm-s-pythonrank .cm-punctuation{color:var(--muted);}
+  #outputBox, #interviewOutputBox{flex:1; min-height:340px; padding:16px; font-family:var(--mono); font-size:.85rem; overflow:auto; white-space:pre-wrap;}
+  .stdin-row{padding:8px 12px; border-top:1px solid var(--border); background:#0d1319;}
+  #outputBox .live-stdin-input{
+    background:transparent; border:none; border-bottom:1px solid var(--yellow); outline:none;
+    color:var(--yellow); font-family:var(--mono); font-size:.85rem; width:160px; padding:0 2px;
+    caret-color:var(--yellow);
+  }
+  #outputBox .ok{color:var(--green);}
+  #outputBox .err{color:var(--red);}
+  #outputBox .muted-line{color:var(--muted);}
+  #outputBox .type-cursor{color:var(--yellow); animation:blink 1s steps(1) infinite;}
+  .run-row{display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border); background:#0d1319;}
+  .snippet-row{display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 4px;}
+  .chip{
+    font-family:var(--mono); font-size:.74rem; padding:6px 11px; border-radius:20px;
+    background:var(--panel-alt); border:1px solid var(--border); color:var(--muted);
+  }
+  .chip:hover{color:var(--text); border-color:var(--blue);}
+
+  #studioCanvas{background:#0a0f14; border:1px solid var(--border); border-radius:8px; max-width:100%; touch-action:none;}
+  #studioSpeed{width:80px; accent-color:var(--yellow);}
+
+  /* ---------- Career roadmap ---------- */
+  .career-steps{display:flex; flex-direction:column; gap:14px; max-width:760px;}
+  .career-step{display:grid; grid-template-columns:40px 1fr; gap:16px; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px;}
+  .career-step .num{
+    width:36px; height:36px; border-radius:50%; background:var(--panel-alt); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; color:var(--yellow);
+  }
+  .career-step h4{margin-bottom:6px;}
+  .career-step ul{margin:8px 0 12px; padding-left:18px; color:var(--muted); font-size:.86rem; line-height:1.65;}
+  .career-step ul li{margin-bottom:3px;}
+  @media (max-width:640px){
+    .career-step{grid-template-columns:32px 1fr; padding:14px 16px;}
+    .career-step .num{width:28px; height:28px; font-size:.82rem;}
+  }
+
+  /* ---------- Quiz ---------- */
+  .quiz-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+  .quiz-filters button{
+    background:var(--panel); border:1px solid var(--border); color:var(--muted);
+    padding:7px 13px; border-radius:20px; font-size:.78rem; font-family:var(--mono);
+  }
+  .quiz-filters button.active{background:var(--blue); color:#fff; border-color:var(--blue);}
+  .quiz-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px; max-width:680px;}
+  .quiz-progress{font-family:var(--mono); color:var(--muted); font-size:.78rem; margin-bottom:10px;}
+  .quiz-q{font-size:1.08rem; font-weight:600; margin-bottom:16px;}
+  .quiz-q code{background:var(--panel-alt); padding:2px 6px; border-radius:4px; color:var(--yellow);}
+  .options{display:grid; gap:9px;}
+  .opt{
+    text-align:left; background:var(--panel-alt); border:1px solid var(--border); color:var(--text);
+    padding:11px 14px; border-radius:8px; font-family:var(--mono); font-size:.86rem;
+  }
+  .opt:hover{border-color:var(--blue);}
+  .opt.correct{border-color:var(--green); background:#3ddc8420; color:var(--green);}
+  .opt.wrong{border-color:var(--red); background:#ff5c5c20; color:var(--red);}
+  .quiz-feedback{margin-top:14px; font-size:.86rem; color:var(--muted); min-height:1.4em;}
+  .quiz-actions{display:flex; justify-content:space-between; margin-top:20px;}
+  .streak-pill{font-family:var(--mono); font-size:.75rem; background:var(--panel-alt); border:1px solid var(--border); padding:5px 11px; border-radius:20px; color:var(--yellow);}
+
+  /* ---------- Learn ---------- */
+  .topic-card{cursor:pointer;}
+  .topic-card:hover{border-color:var(--blue);}
+  .topic-detail{margin-top:22px; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px; display:none;}
+  .topic-detail.show{display:block;}
+  .topic-detail pre{background:#0a0f14; border:1px solid var(--border); border-radius:8px; padding:14px; overflow:auto; font-size:.84rem;}
+
+  /* ---------- Leaderboard / achievements ---------- */
+  .badge-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px;}
+  @media (max-width:760px){.badge-grid{grid-template-columns:repeat(2,1fr);}}
+  .badge{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; opacity:.35; filter:grayscale(1);}
+  .badge.unlocked{opacity:1; filter:none; border-color:var(--yellow);}
+  .badge .icon{font-size:1.6rem; display:block; margin-bottom:6px;}
+  .badge .name{font-weight:700; font-size:.82rem;}
+  .badge .desc{color:var(--muted); font-size:.72rem; margin-top:3px;}
+
+  /* ---------- Modal (generic, reusable) ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(6,9,12,.72); backdrop-filter:blur(3px);
+    align-items:center; justify-content:center; z-index:300; padding:16px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    width:100%; max-width:340px; padding:22px 20px; position:relative;
+    animation:modal-pop .22s ease;
+  }
+  @keyframes modal-pop{ from{opacity:0; transform:scale(.96);} to{opacity:1; transform:none;} }
+  .modal-close{position:absolute; top:10px; right:12px; background:none; border:none; color:var(--muted); font-size:1rem; padding:4px 6px;}
+  .modal-close:hover{color:var(--text);}
+
+  /* ---------- Pro ---------- */
+  .nav-pro-btn{color:var(--yellow) !important;}
+  .pro-badge{
+    display:inline-flex; align-items:center; gap:4px; vertical-align:middle;
+    font-family:var(--mono); font-size:.65rem; font-weight:700;
+    padding:3px 9px; border-radius:20px;
+    background:linear-gradient(135deg,#3a2f00,#1a1608);
+    border:1px solid var(--yellow); color:var(--yellow);
+    box-shadow:0 0 8px #ffd43b44;
+  }
+  /* ---------- Pro: feature showcase (editorial layout) ---------- */
+  .pro-section-header{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;}
+  .pro-header-badge{
+    font-family:var(--mono); font-size:.66rem; font-weight:700; letter-spacing:.06em;
+    color:var(--yellow); border:1px solid var(--yellow); padding:3px 10px; border-radius:4px;
+  }
+  .pf-label{
+    display:flex; align-items:center; gap:7px;
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+  }
+  .pf-icon{width:15px; height:15px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round;}
+  .pro-showcase{display:flex; flex-direction:column; gap:14px; margin-top:16px;}
+
+  .pro-hero-feature{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px;}
+  .pro-hero-feature h4{font-size:1.1rem; font-weight:600; margin:6px 0 12px; max-width:32ch;}
+  .pf-tags{font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-bottom:14px;}
+  .pf-tags span{color:var(--text);}
+  .pf-preview{
+    background:#05080b; border:1px solid var(--border); border-radius:8px;
+    padding:13px 16px; font-family:var(--mono); font-size:.8rem; line-height:1.65;
+  }
+  .pf-preview .prompt{color:var(--muted);}
+  .pf-preview .ask{color:var(--text);}
+  .pf-preview .ok{color:var(--green);}
+  .pf-preview .btnrow{margin-top:8px; display:flex; gap:8px;}
+  .pf-preview .fakebtn{font-family:var(--mono); font-size:.68rem; padding:3px 10px; border:1px solid var(--border); border-radius:5px; color:var(--muted);}
+
+  .pro-row-2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:760px){.pro-row-2{grid-template-columns:1fr;}}
+  .pro-mid-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px; display:flex; flex-direction:column;}
+  .pro-mid-card h4{font-size:.98rem; font-weight:600; margin:6px 0 12px;}
+
+  .pf-stat-row{display:flex; justify-content:space-between; font-family:var(--mono); font-size:.76rem; color:var(--muted); margin:8px 0 4px;}
+  .pf-stat-row b{color:var(--text);}
+  .pf-bar{height:4px; background:var(--panel-alt); border-radius:3px; overflow:hidden; margin-bottom:2px;}
+  .pf-bar > span{display:block; height:100%; background:var(--yellow); border-radius:3px;}
+  .pf-bar.dim > span{background:var(--blue);}
+
+  .pro-support-list{display:grid; grid-template-columns:1fr 1fr; gap:2px 32px; margin-top:4px;}
+  @media (max-width:760px){.pro-support-list{grid-template-columns:1fr;}}
+  .pro-support-item{padding:12px 0; border-bottom:1px solid var(--border-soft);}
+  .pro-support-item h5{margin:0 0 3px; font-size:.88rem; font-weight:600;}
+  .pro-support-item p{margin:0; color:var(--muted); font-size:.8rem;}
+  .pro-price-card{text-align:center; padding:28px 20px; position:relative; transition:transform .15s;}
+  .pro-price-card:hover{transform:translateY(-3px);}
+  .pro-price-card.pro-highlight{border-color:var(--yellow); box-shadow:0 0 26px -6px #ffd43b66;}
+  .pro-price-card.pro-highlight::before{
+    content:"BEST VALUE"; position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:var(--yellow); color:#101418; font-family:var(--mono); font-size:.62rem; font-weight:800;
+    padding:3px 10px; border-radius:20px; letter-spacing:.05em;
+  }
+  .pro-price{font-family:var(--mono); font-size:2rem; font-weight:800; color:var(--yellow); margin:14px 0 4px;}
+  .pro-price span{font-size:.9rem; color:var(--muted); font-weight:500;}
+  .pro-save-note{font-family:var(--mono); font-size:.72rem; color:var(--green); margin-bottom:14px;}
+  .pro-price-card .btn{width:100%; margin-top:10px;}
+  .pro-compare{display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px;}
+  .pro-compare .card{padding:18px;}
+  .pro-compare .card.pro-col{border-color:var(--yellow); box-shadow:0 0 20px -8px #ffd43b55;}
+  .pro-compare ul{list-style:none; margin:12px 0 0; padding:0; font-size:.84rem; color:var(--muted); display:flex; flex-direction:column; gap:8px;}
+  .pro-compare .card.pro-col ul{color:var(--text);}
+  .pro-compare ul li::before{content:"– "; color:var(--muted);}
+  .pro-compare .card.pro-col ul li::before{content:"✓ "; color:var(--yellow);}
+  @media (max-width:640px){.pro-compare{grid-template-columns:1fr;}}
+  .pro-status-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    background:linear-gradient(135deg,#241d02,#12100a); border:1px solid var(--yellow);
+    border-radius:var(--radius); padding:16px 20px; margin:18px 0; box-shadow:0 0 24px -10px #ffd43b55;
+  }
+  .pro-lock{font-size:2rem; text-align:center; margin-bottom:6px;}
+  .pro-modal-box{max-width:360px; text-align:center;}
+  .pro-modal-benefits{list-style:none; padding:0; margin:14px 0; text-align:left; font-size:.84rem; color:var(--muted); display:flex; flex-direction:column; gap:8px;}
+  .pro-modal-benefits li::before{content:"✓ "; color:var(--yellow);}
+  .rank-pro-teaser{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px;
+  }
+  .rank-pro-teaser.is-pro{border-color:var(--yellow); box-shadow:0 0 20px -10px #ffd43b55;}
+
+  /* ---------- AI tutor ---------- */
+  .tutor-layout{display:grid; grid-template-columns:220px 1fr; gap:16px;}
+  @media (max-width:760px){.tutor-layout{grid-template-columns:1fr;}}
+  .tutor-topics{display:flex; flex-direction:column; gap:6px;}
+  .tutor-topics button{
+    text-align:left; background:var(--panel); border:1px solid var(--border); color:var(--muted);
+    padding:9px 12px; border-radius:8px; font-family:var(--mono); font-size:.78rem;
+  }
+  .tutor-topics button:hover, .tutor-topics button.active{color:var(--text); border-color:var(--blue);}
+  .chat-window{background:#0a0f14; border:1px solid var(--border); border-radius:var(--radius); display:flex; flex-direction:column; height:480px;}
+  .chat-log{flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;}
+  .msg{max-width:85%; padding:10px 13px; border-radius:10px; font-size:.88rem; line-height:1.55;}
+  .msg.bot{background:var(--panel-alt); align-self:flex-start; border:1px solid var(--border);}
+  .msg.user{background:var(--blue-dim); align-self:flex-end; color:#fff;}
+  .msg.thinking{display:flex; align-items:center; gap:4px; padding:13px 15px;}
+  .typing-dot{width:6px; height:6px; border-radius:50%; background:var(--muted); animation:typing-bounce 1.1s ease-in-out infinite;}
+  .typing-dot:nth-child(2){animation-delay:.15s;}
+  .typing-dot:nth-child(3){animation-delay:.3s;}
+  @keyframes typing-bounce{0%,60%,100%{transform:translateY(0); opacity:.5;} 30%{transform:translateY(-4px); opacity:1;}}
+  .msg pre{background:#05080b; padding:10px; border-radius:6px; overflow:auto; font-size:.8rem; margin:8px 0 0;}
+  .chat-input-row{display:flex; gap:8px; padding:10px; border-top:1px solid var(--border);}
+  .chat-input-row input{flex:1; background:var(--panel-alt); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-family:var(--sans);}
+
+  footer{text-align:center; color:var(--muted); font-size:.78rem; padding:26px 0; border-top:1px solid var(--border); font-family:var(--mono);}
+  @media (prefers-reduced-motion: reduce){*{animation:none !important; transition:none !important;}}
+
+  /* ---------- Jarvis ---------- */
+  :root{ --cyan:#00e5ff; --cyan-dim:#0a3f47; }
+  .jarvis-stage{display:flex; flex-direction:column; align-items:center; gap:14px; padding:30px 0 10px;}
+  .jarvis-orb{
+    position:relative; width:150px; height:150px; border-radius:50%; cursor:pointer;
+    background:radial-gradient(circle at 50% 45%, #0b1a1e 0%, #060d10 70%);
+    border:1px solid var(--cyan-dim);
+    box-shadow:0 0 30px -6px #00e5ff55, inset 0 0 24px #00e5ff22;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .jarvis-orb .ring{
+    position:absolute; border:1px solid var(--cyan); border-radius:50%; opacity:.5;
+    animation:jarvis-pulse 3.2s ease-in-out infinite;
+  }
+  .jarvis-orb .r1{inset:14px; animation-delay:0s;}
+  .jarvis-orb .r2{inset:30px; animation-delay:.5s;}
+  .jarvis-orb .r3{inset:46px; animation-delay:1s;}
+  .jarvis-orb .core{
+    width:34px; height:34px; border-radius:50%;
+    background:radial-gradient(circle, #baf7ff 0%, var(--cyan) 55%, #0090a0 100%);
+    box-shadow:0 0 22px 4px #00e5ffaa;
+    animation:jarvis-core-breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes jarvis-pulse{
+    0%,100%{transform:scale(.94); opacity:.35;}
+    50%{transform:scale(1.05); opacity:.75;}
+  }
+  @keyframes jarvis-core-breathe{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.14);}
+  }
+  .jarvis-orb.listening{border-color:var(--cyan); box-shadow:0 0 46px -4px #00e5ffaa, inset 0 0 30px #00e5ff44;}
+  .jarvis-orb.listening .ring{animation-duration:1s; border-color:#baf7ff;}
+  .jarvis-orb.speaking .core{animation-duration:.5s;}
+  .jarvis-orb.speaking .ring{animation-duration:1.4s; border-color:var(--yellow);}
+  .jarvis-status{color:var(--cyan); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase;}
+
+  .jarvis-transcript{
+    max-width:640px; margin:20px auto 0; display:flex; flex-direction:column; gap:10px;
+    max-height:280px; overflow-y:auto; padding-right:2px;
+  }
+  .jarvis-transcript .msg.bot{border-color:var(--cyan-dim);}
+  .jarvis-input-row{max-width:640px; margin:18px auto 0;}
+  .jarvis-voice-toggle{
+    display:flex; align-items:center; gap:7px; justify-content:center;
+    max-width:640px; margin:12px auto 0; font-size:.72rem; color:var(--muted);
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width:760px){
+    .stat-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:640px){
+    .topbar{flex-wrap:wrap; padding:10px 14px; gap:8px; row-gap:10px;}
+    .brand{order:1; flex:1 1 auto; font-size:.95rem;}
+    .py-mark{width:22px; height:22px;}
+    .top-actions{order:2; gap:6px;}
+    .status-card{font-size:.62rem; padding:6px 9px; line-height:1.35;}
+    .icon-btn{width:30px; height:30px;}
+    .icon-btn svg{width:14px; height:14px;}
+    nav.tabs{order:3; flex:1 1 100%; width:100%; -webkit-overflow-scrolling:touch;}
+    nav.tabs button{padding:7px 11px; font-size:.78rem;}
+
+    main{padding:22px 14px 70px;}
+    .hero{padding:10px 0 30px; gap:26px;}
+    .hero h1{font-size:1.7rem;}
+    .hero-ctas .btn{flex:1 1 auto; text-align:center;}
+    .terminal .body{font-size:.78rem; min-height:130px;}
+
+    .quiz-card, .card, .ladder{padding:16px;}
+    .quiz-q{font-size:1rem;}
+    .opt{padding:10px 12px; font-size:.8rem;}
+
+    .editor-pane .CodeMirror{height:260px !important; font-size:.82rem;}
+    #outputBox, #interviewOutputBox{min-height:220px; font-size:.82rem;}
+    .snippet-row{gap:6px;}
+    .chip{font-size:.7rem; padding:5px 10px;}
+
+    .chat-window{height:70vh; max-height:440px;}
+    .msg{max-width:92%; font-size:.85rem;}
+
+    .badge-grid{grid-template-columns:repeat(2,1fr); gap:10px;}
+    .badge{padding:12px;}
+
+    nav.tabs button.active{white-space:nowrap;}
+  }
+  @media (max-width:400px){
+    .brand{font-size:.86rem;}
+    .status-card{display:none;}
+  }
+
+  /* ---------- Hidden scrollbars (scroll still works) ---------- */
+  html, body,
+  nav.tabs,
+  .CodeMirror-scroll,
+  #outputBox,
+  #interviewOutputBox,
+  #interviewLog,
+  .chat-log,
+  .jarvis-transcript,
+  .topic-detail pre,
+  pre{
+    scrollbar-width:none;      /* Firefox */
+    -ms-overflow-style:none;   /* IE / old Edge */
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  nav.tabs::-webkit-scrollbar,
+  .CodeMirror-scroll::-webkit-scrollbar,
+  #outputBox::-webkit-scrollbar,
+  #interviewOutputBox::-webkit-scrollbar,
+  #interviewLog::-webkit-scrollbar,
+  .chat-log::-webkit-scrollbar,
+  .jarvis-transcript::-webkit-scrollbar,
+  .topic-detail pre::-webkit-scrollbar,
+  pre::-webkit-scrollbar{
+    display:none;              /* Chrome, Safari, Opera */
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="py-mark" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path class="coil a" d="M13 2c-3.3 0-5.4 1.5-5.4 4.2v2.6h5.5v.9H5.2C2.6 9.7 1 11.6 1 14.6c0 3 1.5 4.9 4.2 4.9h2.4v-2.9c0-2.9 2.5-5.1 5.4-5.1h5.5c2.4 0 4.3-1.9 4.3-4.3V6.2C22.8 3.4 18.6 2 13 2z" fill="var(--blue)"/>
+      <circle class="eye" cx="5.2" cy="6.4" r="1.15" fill="#eaf2f8"/>
+      <path class="coil b" d="M13 24c3.3 0 5.4-1.5 5.4-4.2v-2.6h-5.5v-.9h7.9c2.6 0 4.2-1.9 4.2-4.9 0-3-1.5-4.9-4.2-4.9h-2.4v2.9c0 2.9-2.5 5.1-5.4 5.1H7.5C5.1 14.5 3.2 16.4 3.2 18.8v1.1C3.2 22.6 7.4 24 13 24z" fill="var(--yellow)"/>
+      <circle class="eye" cx="20.8" cy="19.6" r="1.15" fill="#2a2a2a"/>
+    </svg>
+    PythonRank
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button data-tab="home" class="active">home</button>
+    <button data-tab="compiler">compiler</button>
+    <button data-tab="quiz">quiz</button>
+    <button data-tab="interview">interview</button>
+    <button data-tab="career">career</button>
+    <button data-tab="studio">studio</button>
+    <button data-tab="learn">learn</button>
+    <button data-tab="tutor">ai_tutor</button>
+    <button data-tab="jarvis">jarvis</button>
+    <button data-tab="rank">rank</button>
+    <button data-tab="pro" class="nav-pro-btn">💎 pro</button>
+  </nav>
+  <div class="top-actions">
+    <div class="status-card" id="statusCard">$ whoami --rank<br><b>Hatchling</b> · score 0<span class="cursor"></span></div>
+    <span class="pro-badge-slot"></span>
+    <button class="icon-btn" id="fullscreenBtn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+      <svg id="fsIconExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      <svg id="fsIconShrink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HOME -->
+  <section id="tab-home" class="active">
+    <div class="hero">
+      <div>
+        <div class="eyebrow">// python interview & quiz platform</div>
+        <h1>Climb the <span class="hl">rank ladder</span>,<br>one Python problem at a time.</h1>
+        <p class="lede">Quiz yourself on history, syntax and logic, run real Python in your browser with instant errors, and get graded like an interviewer would — then watch your rank climb.</p>
+        <div class="hero-ctas">
+          <button class="btn primary" data-goto="quiz">Start the quiz →</button>
+          <button class="btn" data-goto="compiler">Open compiler</button>
+          <button class="btn" data-goto="studio">Build a game →</button>
+          <button class="btn ghost" data-goto="tutor">Ask the AI tutor</button>
+        </div>
+      </div>
+      <div class="terminal">
+        <div class="bar"><span></span><span></span><span></span></div>
+        <div class="body">
+          <div class="line">$ <span id="typeTarget"></span></div>
+          <div id="typeOut"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n">34</div><div class="l">interview-style questions</div></div>
+      <div class="stat">
+<div class="n">8</div><div class="l">core topics: history → loops → lists → strings</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">ranks to climb, from Hatchling to Grandmaster</div></div>
+    </div>
+
+    <div class="ladder-wrap">
+      <div class="ladder">
+        <h3>// your rank ladder</h3>
+        <div id="ladderList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPILER -->
+  <section id="tab-compiler">
+    <div class="eyebrow">// live compiler</div>
+    <h2>Run real Python. See real errors.</h2>
+
+    <div class="snippet-row">
+      <button class="chip" data-snippet="hello">hello world</button>
+      <button class="chip" data-snippet="ifelse">if / else</button>
+      <button class="chip" data-snippet="loop">for loop</button>
+      <button class="chip" data-snippet="list">list comprehension</button>
+      <button class="chip" data-snippet="string">string methods</button>
+      <button class="chip" data-snippet="error">trigger an error</button>
+      <button class="chip" data-snippet="oop">OOP / classes</button>
+      <button class="chip" data-snippet="assistant">build a Jarvis-like assistant</button>
+    </div>
+
+    <div class="compiler-layout">
+      <div class="editor-pane">
+        <div class="pane-head">
+          <span>main.py</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn primary small" id="runBtn" disabled>▶ Run</button>
+            <button class="btn ghost small" id="clearBtn">Clear</button>
+          </div>
+        </div>
+        <textarea id="codeInput" spellcheck="false"></textarea>
+        <div class="stdin-row">
+          <span class="mono" style="font-size:.68rem; color:var(--muted);">input() prompts appear live in the console — type your answer right there and press Enter.</span>
+        </div>
+      </div>
+      <div class="output-pane" id="outputPane">
+        <div class="pane-head"><span><span id="runStatusDot" class="run-status-dot"></span>console</span><span id="runCount" class="mono">0 runs</span></div>
+        <div id="outputBox"><span class="muted-line">Output will appear here.</span></div>
+        <button class="btn ghost small" id="explainErrorBtn" style="display:none; margin:0 12px 12px;">🔎 Explain this error</button>
+        <div id="errorExplainBox" style="display:none;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="tab-quiz">
+    <div class="eyebrow">// timed knowledge check</div>
+    <h2>Quiz — answer like it's the interview.</h2>
+    <p class="lede">Pick a category or run the full mixed set. Correct answers raise your score and streak; your rank updates live.</p>
+
+    <div class="quiz-filters" id="quizFilters"></div>
+
+    <div id="quizArea"></div>
+  </section>
+
+  <!-- AI INTERVIEWER -->
+  <section id="tab-interview">
+    <div class="eyebrow">// mock interview</div>
+    <h2>AI Interviewer — talk it through, then code it.</h2>
+    <p class="lede">A short round of interview-style concept questions, then one live coding problem with real, automated test cases run in the compiler.</p>
+
+    <div id="interviewIntro" class="quiz-card" style="max-width:680px;">
+      <h3>Ready when you are.</h3>
+      <p class="lede">You'll get 3 quick concept questions, then a coding problem to implement and submit.</p>
+      <button class="btn primary small" id="startInterviewBtn">Start interview →</button>
+    </div>
+
+    <div id="interviewChat" style="display:none; max-width:680px;">
+      <div class="chat-window" style="height:380px;">
+        <div class="chat-log" id="interviewLog"></div>
+        <div class="chat-input-row" id="interviewInputRow">
+          <input id="interviewAnswerInput" type="text" placeholder="Type your answer…" aria-label="Your answer">
+          <button class="btn primary small" id="interviewAnswerSend">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="interviewChallenge" style="display:none; margin-top:22px;">
+      <div class="card" id="challengeBrief" style="margin-bottom:14px;"></div>
+      <div class="compiler-layout">
+        <div class="editor-pane">
+          <div class="pane-head"><span id="challengeFuncLabel">solution.py</span><span class="mono">python</span></div>
+          <textarea id="interviewCodeInput" spellcheck="false"></textarea>
+          <div class="run-row">
+            <button class="btn primary small" id="interviewRunBtn">▶ Run tests</button>
+            <button class="btn ghost small" id="interviewResetBtn">Reset code</button>
+          </div>
+        </div>
+        <div class="output-pane">
+          <div class="pane-head"><span>test results</span><span id="interviewScoreTag" class="mono"></span></div>
+          <div id="interviewOutputBox"><span class="muted-line">Run your solution to see test results here.</span></div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn ghost small" id="newInterviewBtn">Start a new interview →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAREER PATH -->
+  <section id="tab-career">
+    <div class="eyebrow">// career path</div>
+    <h2>How to actually get a Python job.</h2>
+    <p class="lede">Learning the language is step one. Here's the realistic path from "I know Python" to "I got hired" — with links to the tools on this site that cover each step.</p>
+
+    <div class="career-steps">
+      <div class="career-step">
+        <div class="num">1</div>
+        <div>
+          <h4>Learn the fundamentals properly</h4>
+          <p class="lede" style="margin:0 0 8px;">Don't skip the boring parts — interviewers test them constantly. Get genuinely comfortable with:</p>
+          <ul>
+            <li>Variables, data types, and control flow (if/else, loops)</li>
+            <li>Core data structures: lists, dicts, sets, tuples</li>
+            <li>Functions, OOP basics, and error handling</li>
+          </ul>
+          <button class="btn primary small" data-goto="learn">Go to Learn →</button>
+        </div>
+      </div>
+
+      <div class="career-step">
+        <div class="num">2</div>
+        <div>
+          <h4>Build 3–5 real projects</h4>
+          <p class="lede" style="margin:0 0 8px;">Tutorials prove you can follow instructions; projects prove you can build. Pick things you'd actually use:</p>
+          <ul>
+            <li>A small automation script (rename files, scrape a site, send a report)</li>
+            <li>Something with a UI or game loop — even a simple Snake clone counts</li>
+            <li>One project that touches an API, a database, or a file format you hadn't used before</li>
+          </ul>
+          <button class="btn primary small" data-goto="studio">Open the Studio →</button>
+        </div>
+      </div>
+
+      <div class="career-step">
+        <div class="num">3</div>
+        <div>
+          <h4>Drill problem-solving, not just syntax</h4>
+          <p class="lede" style="margin:0 0 8px;">Technical screens lean hard on data structures and algorithms — comfort here comes from repetition, not memorization.</p>
+          <ul>
+            <li>Practice explaining your approach out loud before you code, not after</li>
+            <li>Get fast at the basics: reversing, searching, sorting, simple recursion</li>
+            <li>Time yourself occasionally — real interviews have a clock</li>
+          </ul>
+          <button class="btn primary small" data-goto="quiz">Take the quiz →</button>
+        </div>
+      </div>
+
+      <div class="career-step">
+        <div class="num">4</div>
+        <div>
+          <h4>Put together a resume and portfolio</h4>
+          <p class="lede" style="margin:0 0 8px;">Recruiters skim in seconds — make the relevant stuff impossible to miss.</p>
+          <ul>
+            <li>A GitHub with a few clean, documented projects beats ten messy ones</li>
+            <li>Lead resume bullets with impact ("cut processing time 40%"), not just duties</li>
+            <li>A short README per project explaining what it does and why you built it</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="career-step">
+        <div class="num">5</div>
+        <div>
+          <h4>Apply strategically, not just widely</h4>
+          <p class="lede" style="margin:0 0 8px;">Volume matters less than fit and follow-through.</p>
+          <ul>
+            <li>Tailor your resume's keywords to each job description — many are filtered by ATS software first</li>
+            <li>A warm referral or a short, specific outreach message outperforms a cold application</li>
+            <li>Track what you applied to and when, so you can follow up in ~1–2 weeks</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="career-step">
+        <div class="num">6</div>
+        <div>
+          <h4>Rehearse the interview itself</h4>
+          <p class="lede" style="margin:0 0 8px;">Most candidates lose points on communication, not correctness.</p>
+          <ul>
+            <li>Practice narrating your thinking — silence is worse than a wrong first guess</li>
+            <li>Prep 2–3 STAR-format stories (Situation, Task, Action, Result) for behavioral questions</li>
+            <li>Always ask a genuine question back at the end — it signals real interest</li>
+          </ul>
+          <button class="btn primary small" data-goto="interview">Start a mock interview →</button>
+        </div>
+      </div>
+
+      <div class="career-step">
+        <div class="num">7</div>
+        <div>
+          <h4>Keep leveling up after you land one</h4>
+          <p class="lede" style="margin:0 0 8px;">Getting hired is the start, not the finish line.</p>
+          <ul>
+            <li>Pick a direction to specialize in — web (Django/Flask), data, automation, or ML</li>
+            <li>Read other people's code; it teaches patterns tutorials don't</li>
+            <li>Keep a running list of things you didn't know how to do — that's your next study list</li>
+          </ul>
+          <button class="btn primary small" data-goto="rank">Check your rank →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME & APP STUDIO -->
+  <section id="tab-studio">
+    <div class="eyebrow">// game &amp; app studio</div>
+    <h2>Build real games and apps in Python.</h2>
+    <p class="lede">This editor gives your Python code a canvas and live keyboard input. Define a function called <code style="background:var(--panel-alt); padding:2px 6px; border-radius:4px; color:var(--yellow);">update()</code> and it runs once per tick — the same loop every real game engine uses under the hood.</p>
+
+    <div class="snippet-row">
+      <button class="chip" data-studio="snake">playable snake</button>
+      <button class="chip" data-studio="ball">bouncing ball app</button>
+      <button class="chip" data-studio="blank">blank canvas</button>
+      <button class="chip" data-studio="pygamelite">pygame-style bouncing ball</button>
+    </div>
+
+    <div class="compiler-layout">
+      <div class="editor-pane">
+        <div class="pane-head"><span>game.py</span><span id="studioStatus" class="mono">idle</span></div>
+        <textarea id="studioCodeInput" spellcheck="false"></textarea>
+        <div class="run-row">
+          <button class="btn primary small" id="studioRunBtn" disabled>▶ Run</button>
+          <button class="btn ghost small" id="studioStopBtn" disabled>■ Stop</button>
+          <label class="mono" style="display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--muted); margin-left:auto;">
+            speed <input type="range" id="studioSpeed" min="40" max="400" value="120">
+          </label>
+        </div>
+      </div>
+      <div class="output-pane">
+        <div class="pane-head"><span>canvas</span><span class="mono" style="color:var(--muted);">arrow keys to play</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; padding:14px; gap:10px;">
+          <canvas id="studioCanvas" width="400" height="300"></canvas>
+          <div id="studioLog" class="mono" style="width:100%; font-size:.76rem; color:var(--green); min-height:18px;"></div>
+          <div id="studioErrorBox" class="mono" style="width:100%; font-size:.78rem; color:var(--red); white-space:pre-wrap;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px; max-width:680px;">
+      <h4>Available inside <code>import canvas</code> (2D)</h4>
+      <p class="lede" style="margin:0;">
+        <code>canvas.WIDTH</code>, <code>canvas.HEIGHT</code> · <code>canvas.clear(color)</code> · <code>canvas.rect(x,y,w,h,color)</code> · <code>canvas.circle(x,y,r,color)</code> · <code>canvas.line(x1,y1,x2,y2,color,width)</code> · <code>canvas.text(x,y,msg,color,size)</code> · <code>canvas.is_pressed(key)</code> · <code>canvas.log(msg)</code>
+      </p>
+    </div>
+    <div class="card" style="margin-top:14px; max-width:680px;">
+      <h4>Available inside <code>import pygame</code> (compatible shim)</h4>
+      <p class="lede" style="margin:0 0 8px;">
+        Familiar pygame syntax mapped onto this same canvas: <code>pygame.init()</code> · <code>pygame.display.set_mode()</code> · <code>screen.fill(color)</code> · <code>pygame.draw.rect/circle/line()</code> · <code>pygame.Rect()</code> · <code>pygame.key.get_pressed()</code> with <code>K_UP/K_DOWN/K_LEFT/K_RIGHT/K_SPACE</code> · <code>pygame.time.Clock().tick()</code> (timing is actually controlled by the speed slider, this is just a no-op for familiarity).
+      </p>
+      <p class="mono" style="font-size:.7rem; color:var(--muted); margin:0;">
+        One real requirement: put your loop body inside a top-level <code>update()</code> function, not a <code>while running:</code> loop — a real infinite loop would freeze the tab, since there's no background thread to run it on here.
+      </p>
+    </div>
+  </section>
+
+  <!-- LEARN -->
+  <section id="tab-learn">
+    <div class="eyebrow">// learn / practice</div>
+    <h2>Basic to advanced — pick a topic, read the notes, run the example.</h2>
+    <p class="lede">23 topics from Python's history through decorators and generators. Filter by level, open a card, then send its example straight to the compiler.</p>
+    <div class="quiz-filters" id="learnLevelFilters"></div>
+    <div class="grid cols-3" id="topicGrid"></div>
+    <div class="topic-detail" id="topicDetail"></div>
+  </section>
+
+  <!-- AI TUTOR -->
+  <section id="tab-tutor">
+    <div class="eyebrow">// ai tutor</div>
+    <h2>Ask about any Python concept.</h2>
+    <p class="lede">A focused Python tutor — pick a topic on the left or type a question (e.g. "what is a dictionary" or "explain for loops").</p>
+    <div class="tutor-layout">
+      <div class="tutor-topics" id="tutorTopics"></div>
+      <div class="chat-window">
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" type="text" placeholder="Ask about variables, loops, lists…" aria-label="Ask the AI tutor">
+          <button class="btn primary small" id="chatSend">Send</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JARVIS -->
+  <section id="tab-jarvis">
+    <div class="eyebrow">// voice assistant</div>
+    <h2>J.A.R.V.I.S. — talk to it out loud.</h2>
+    <p class="lede">Tap the core and ask a Python question — it listens, thinks, and answers back in a voice, right in your browser.</p>
+
+    <div class="jarvis-stage">
+      <button class="jarvis-orb" id="jarvisOrb" aria-label="Tap to talk to Jarvis">
+        <span class="ring r1"></span>
+        <span class="ring r2"></span>
+        <span class="ring r3"></span>
+        <span class="core"></span>
+      </button>
+      <div class="jarvis-status mono" id="jarvisStatus">standing by</div>
+      <div class="mono" style="font-size:.68rem; color:var(--muted); max-width:380px; text-align:center;">
+        First tap asks for mic access once — if your browser keeps re-asking, that's a local-file limitation; hosting this on a real https domain fixes it for good.
+      </div>
+      <div id="jarvisUnsupported" class="mono" style="display:none; font-size:.74rem; color:var(--muted); max-width:360px; text-align:center;">
+        Voice input isn't supported in this browser — try Chrome. You can still type below and Jarvis will still talk back.
+      </div>
+    </div>
+
+    <div class="jarvis-transcript" id="jarvisTranscript"></div>
+
+    <div class="chat-input-row jarvis-input-row">
+      <input id="jarvisTextInput" type="text" placeholder="Or type your question…" aria-label="Ask Jarvis">
+      <button class="btn primary small" id="jarvisTextSend">Send</button>
+    </div>
+    <label class="mono jarvis-voice-toggle">
+      <input type="checkbox" id="jarvisVoiceToggle" checked> speak replies aloud
+    </label>
+  </section>
+
+  <!-- RANK -->
+  <section id="tab-rank">
+    <div class="eyebrow">// progress</div>
+    <h2>Your rank & achievements. <span class="pro-badge-slot"></span></h2>
+    <p class="lede">Everything below is tracked locally in this browser — your own scoreboard, no server required.</p>
+
+    <div id="rankProSection" style="margin-bottom:26px;"></div>
+
+    <div class="grid cols-3" style="margin-bottom:26px;">
+      <div class="card"><h4>Score</h4><div class="n mono" id="rankScore" style="font-size:1.8rem;color:var(--yellow);">0</div></div>
+      <div class="card"><h4>Best streak</h4><div class="n mono" id="rankStreak" style="font-size:1.8rem;color:var(--green);">0</div></div>
+      <div class="card"><h4>Current rank</h4><div class="n mono" id="rankTier" style="font-size:1.8rem;">Hatchling</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:26px;">
+      <h4>Ladder</h4>
+      <div id="ladderList2"></div>
+    </div>
+
+    <div class="card">
+      <h4>Achievements</h4>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <button class="btn danger small" id="resetBtn">Reset all progress</button>
+    </div>
+  </section>
+
+  <!-- PRO -->
+  <section id="tab-pro">
+    <div class="eyebrow">// pythonrank pro</div>
+    <div class="terminal" style="max-width:420px; margin-bottom:22px;">
+      <div class="bar"><span></span><span></span><span></span></div>
+      <div class="body">
+        <div class="line">$ pythonrank --upgrade</div>
+        <div class="line out">&gt; Unlocking PythonRank Pro...</div>
+      </div>
+    </div>
+    <h2>Start learning smarter with <span class="hl">PythonRank Pro</span>.</h2>
+    <p class="lede">A demo subscription experience — no real payment is processed yet. It's built so a real provider (Razorpay, Stripe) can be dropped into one function later.</p>
+
+    <div id="proStatusBanner"></div>
+
+    <div id="proPricing">
+      <div class="grid cols-2" style="max-width:680px; margin:22px 0;">
+        <div class="card pro-price-card">
+          <span class="tag">monthly</span>
+          <div class="pro-price">₹149<span>/month</span></div>
+          <button class="btn primary" data-plan="monthly">Upgrade to Pro</button>
+        </div>
+        <div class="card pro-price-card pro-highlight">
+          <span class="tag" style="color:var(--yellow); border-color:var(--yellow);">yearly</span>
+          <div class="pro-price">₹1,499<span>/year</span></div>
+          <div class="pro-save-note">≈ ₹125/mo — best value</div>
+          <button class="btn primary" data-plan="yearly">Upgrade to Pro</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pro-section-header" style="margin-top:40px;">
+      <div>
+        <div class="pf-label">what's included</div>
+        <h3 style="margin:2px 0 0;">9 tools. One subscription.</h3>
+      </div>
+      <span class="pro-header-badge">PRO</span>
+    </div>
+
+    <div class="pro-showcase">
+      <!-- Hero feature: AI Tutor -->
+      <div class="pro-hero-feature">
+        <div class="pf-head">
+          <div>
+            <div class="pf-label">
+              <svg class="pf-icon" viewBox="0 0 18 18"><rect x="1.5" y="2.5" width="15" height="13" rx="2"/><path d="M4.5 7l2.5 2-2.5 2M9 11h4"/></svg>
+              AI Tutor
+            </div>
+            <h4>Your Python copilot for debugging, concepts, and practice.</h4>
+          </div>
+        </div>
+        <div class="pf-tags"><span>Debug code</span> · <span>Get hints</span> · <span>Explain concepts</span></div>
+        <div class="pf-preview">
+          <div class="prompt">$ pythonrank tutor</div>
+          <div>&nbsp;</div>
+          <div class="ask">&gt; Why is my loop failing?</div>
+          <div>&nbsp;</div>
+          <div class="ok">✓ Found 2 possible issues</div>
+          <div class="btnrow"><span class="fakebtn">Explain</span><span class="fakebtn">Show Hint</span></div>
+        </div>
+      </div>
+
+      <!-- Two mid-weight features -->
+      <div class="pro-row-2">
+        <div class="pro-mid-card">
+          <div class="pf-label">
+            <svg class="pf-icon" viewBox="0 0 18 18"><path d="M2 3.5h14v8H6.5L3 14.5V11.5H2z"/><path d="M6.5 6.5h5M6.5 9h3"/></svg>
+            Interview Practice
+          </div>
+          <h4>Practice until the interview stops feeling scary.</h4>
+          <div class="pf-preview" style="margin-top:auto;">
+            <div class="prompt">INTERVIEW #12 · Python · Intermediate</div>
+            <div>&nbsp;</div>
+            <div class="ask">"What is a Python decorator?"</div>
+            <div class="btnrow"><span class="fakebtn">Answer</span></div>
+          </div>
+          <div class="pf-tags" style="margin-top:12px; margin-bottom:0;"><span>Technical Qs</span> · <span>Follow-ups</span> · <span>Score + feedback</span></div>
+        </div>
+
+        <div class="pro-mid-card">
+          <div class="pf-label">
+            <svg class="pf-icon" viewBox="0 0 18 18"><path d="M2 15.5V2M2 15.5h14"/><rect x="4.5" y="10" width="2" height="4"/><rect x="8" y="6.5" width="2" height="7.5"/><rect x="11.5" y="3.5" width="2" height="10.5"/></svg>
+            Performance Analytics
+          </div>
+          <h4>Know what to work on next.</h4>
+          <div class="pf-stat-row"><span>Python score</span><b>82%</b></div>
+          <div class="pf-bar"><span style="width:82%;"></span></div>
+          <div class="pf-stat-row"><span>Quiz accuracy</span><b>91%</b></div>
+          <div class="pf-bar dim"><span style="width:91%;"></span></div>
+          <div class="pf-stat-row"><span>Interview score</span><b>76%</b></div>
+          <div class="pf-bar dim"><span style="width:76%;"></span></div>
+          <div class="mono" style="font-size:.72rem; color:var(--green); margin-top:6px;">↑ 12% this week · 3 weak topics flagged</div>
+        </div>
+      </div>
+
+      <!-- Supporting features -->
+      <div class="pro-support-list">
+        <div class="pro-support-item">
+          <h5>Advanced Quizzes</h5>
+          <p>Syntax, OOP, data structures, algorithms — the harder stuff.</p>
+        </div>
+        <div class="pro-support-item">
+          <h5>Coding Challenges</h5>
+          <p>Ranked problems that actually move your score.</p>
+        </div>
+        <div class="pro-support-item">
+          <h5>Certificates</h5>
+          <p>Proof you finished, not just started.</p>
+        </div>
+        <div class="pro-support-item">
+          <h5>Advanced Projects</h5>
+          <p>Portfolio pieces, not tutorials.</p>
+        </div>
+        <div class="pro-support-item">
+          <h5>No Ads</h5>
+          <p>Nothing between you and the problem.</p>
+        </div>
+        <div class="pro-support-item">
+          <h5>Exclusive Roadmaps</h5>
+          <p>Structured paths: web, data, ML, backend, interviews.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:36px;">Free vs Pro</h3>
+    <div class="pro-compare" id="proCompareTable"></div>
+
+    <div class="card" style="margin-top:30px; max-width:680px;">
+      <h4>Testing the Pro / Free states</h4>
+      <p class="lede" style="margin:0 0 10px;">No real backend yet — flip between states locally to test both experiences.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn small" id="proTestFreeBtn">Simulate: Free</button>
+        <button class="btn small primary" id="proTestProBtn">Simulate: Pro</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>PythonRank — built for practice, not affiliated with the Python Software Foundation. Runs 100% in your browser.</footer>
+
+<div class="modal-overlay" id="upgradeModalOverlay">
+  <div class="modal-box pro-modal-box">
+    <button class="modal-close" id="upgradeModalClose" aria-label="Close">✕</button>
+    <div class="pro-lock">🔒</div>
+    <h3>PythonRank Pro</h3>
+    <p class="lede">Unlock this feature with PythonRank Pro.</p>
+    <ul class="pro-modal-benefits">
+      <li>Unlimited AI Tutor & Interview Practice</li>
+      <li>Advanced quizzes & coding challenges</li>
+      <li>Detailed performance analytics</li>
+      <li>Certificates on completion</li>
+      <li>No ads, ever</li>
+    </ul>
+    <button class="btn primary" style="width:100%;" id="upgradeModalCta">Upgrade to Pro — ₹149/month</button>
+    <button class="btn ghost" style="width:100%; margin-top:8px;" id="upgradeModalLater">Maybe Later</button>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+/* =========================================================
+   CODE EDITORS (CodeMirror, Python syntax highlighting)
+========================================================= */
+const CM_OPTIONS = {
+  mode: {name: "python", version: 3, singleLineStringErrors: false},
+  theme: "pythonrank",
+  lineNumbers: false,
+  indentUnit: 4,
+  tabSize: 4,
+  indentWithTabs: false,
+  matchBrackets: true,
+};
+const codeCM = CodeMirror.fromTextArea(document.getElementById("codeInput"), CM_OPTIONS);
+const interviewCM = CodeMirror.fromTextArea(document.getElementById("interviewCodeInput"), CM_OPTIONS);
+const studioCM = CodeMirror.fromTextArea(document.getElementById("studioCodeInput"), CM_OPTIONS);
+
+/* =========================================================
+   STATE
+========================================================= */
+const TIERS = [
+  {name:"Hatchling", min:0},
+  {name:"Script Kid", min:20},
+  {name:"Loop Runner", min:40},
+  {name:"List Wrangler", min:60},
+  {name:"Function Forger", min:80},
+  {name:"Class Architect", min:100},
+  {name:"Pythonista Grandmaster", min:120},
+];
+
+const ACHIEVEMENTS = [
+  {id:"first_blood", icon:"🥇", name:"First Blood", desc:"Answer your first question correctly"},
+  {id:"streak5", icon:"🔥", name:"On Fire", desc:"Get a 5-answer streak"},
+  {id:"history_buff", icon:"📜", name:"History Buff", desc:"Ace every History question"},
+  {id:"loop_master", icon:"🔁", name:"Loop Master", desc:"Ace every Loops question"},
+  {id:"list_master", icon:"📦", name:"List Master", desc:"Ace every Lists question"},
+  {id:"string_master", icon:"🔤", name:"String Master", desc:"Ace every Strings question"},
+  {id:"compiler_10", icon:"🖥️", name:"Compiler Warrior", desc:"Run code 10 times"},
+  {id:"bug_squasher", icon:"🐛", name:"Bug Squasher", desc:"Fix an error and re-run successfully"},
+  {id:"interview_ace", icon:"🎯", name:"Interview Ace", desc:"Pass every test in a coding challenge"},
+  {id:"game_maker", icon:"🕹️", name:"Game Maker", desc:"Get a game or app running in the Studio"},
+];
+
+const DEFAULT_STATE = {
+  score:0, streak:0, bestStreak:0, runs:0,
+  answered:{}, categoryPerfect:{}, achievements:[], lastRunHadError:false,
+  subscriptionStatus:"free", proPlan:null,
+};
+
+let currentUser = localStorage.getItem("pythonrank_current_user") || null;
+function stateKey(){ return "pythonrank_state_" + (currentUser || "guest"); }
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(stateKey());
+    if(!raw) return structuredClone(DEFAULT_STATE);
+    return Object.assign(structuredClone(DEFAULT_STATE), JSON.parse(raw));
+  }catch(e){ return structuredClone(DEFAULT_STATE); }
+}
+let STATE = loadState();
+function saveState(){ localStorage.setItem(stateKey(), JSON.stringify(STATE)); }
+
+function currentTier(score){
+  let t = TIERS[0];
+  for(const tier of TIERS){ if(score >= tier.min) t = tier; }
+  return t;
+}
+function nextTier(score){
+  for(const tier of TIERS){ if(score < tier.min) return tier; }
+  return null;
+}
+
+/* =========================================================
+   NAV
+========================================================= */
+const tabButtons = document.querySelectorAll("nav.tabs button");
+function goTo(tab){
+  tabButtons.forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+  document.querySelectorAll("main section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("tab-"+tab).classList.add("active");
+  if(tab==="rank") renderRankTab();
+  if(tab==="pro") renderProTab();
+  if(tab==="jarvis") greetJarvisOnce();
+  if(tab==="compiler") setTimeout(()=>codeCM.refresh(), 0);
+  if(tab==="interview") setTimeout(()=>interviewCM.refresh(), 0);
+  if(tab==="studio") setTimeout(()=>studioCM.refresh(), 0);
+}
+tabButtons.forEach(b=>b.addEventListener("click",()=>goTo(b.dataset.tab)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>goTo(b.dataset.goto)));
+
+/* =========================================================
+   FULLSCREEN
+========================================================= */
+const fsBtn = document.getElementById("fullscreenBtn");
+const fsExpand = document.getElementById("fsIconExpand");
+const fsShrink = document.getElementById("fsIconShrink");
+fsBtn.addEventListener("click", ()=>{
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen?.().catch(()=>{});
+  } else {
+    document.exitFullscreen?.();
+  }
+});
+document.addEventListener("fullscreenchange", ()=>{
+  const isFull = !!document.fullscreenElement;
+  fsExpand.style.display = isFull ? "none" : "";
+  fsShrink.style.display = isFull ? "" : "none";
+  fsBtn.title = isFull ? "Exit fullscreen" : "Toggle fullscreen";
+});
+
+/* =========================================================
+   CODE AUTOSAVE (survives crashes / accidental closes)
+========================================================= */
+function codeKey(){ return "pythonrank_code_" + (currentUser || "guest"); }
+
+let codeSaveTimer = null;
+function scheduleCodeSave(){
+  clearTimeout(codeSaveTimer);
+  codeSaveTimer = setTimeout(saveCodeDraft, 400);
+}
+function saveCodeDraft(){
+  localStorage.setItem(codeKey(), JSON.stringify({
+    code: codeCM.getValue(),
+    studio: studioCM.getValue(),
+  }));
+}
+function loadCodeDraft(){
+  try{
+    const raw = localStorage.getItem(codeKey());
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function restoreCodeDraft(){
+  const draft = loadCodeDraft();
+  codeCM.setValue((draft && typeof draft.code === "string") ? draft.code : "");
+  studioCM.setValue((draft && typeof draft.studio === "string") ? draft.studio : STUDIO_SNIPPETS.snake);
+}
+codeCM.on("change", scheduleCodeSave);
+studioCM.on("change", scheduleCodeSave);
+
+/* =========================================================
+   AUTO-SAVE ON EXIT
+========================================================= */
+window.addEventListener("beforeunload", ()=>{ saveState(); saveCodeDraft(); });
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "hidden"){ saveState(); saveCodeDraft(); }
+});
+setInterval(()=>{ saveState(); saveCodeDraft(); }, 20000);
+
+/* =========================================================
+   STATUS CARD + LADDER (shared render)
+========================================================= */
+function renderStatus(){
+  const tier = currentTier(STATE.score);
+  const nxt = nextTier(STATE.score);
+  document.getElementById("statusCard").innerHTML =
+    `$ whoami --rank<br><b>${tier.name}</b> · score ${STATE.score} · streak ${STATE.streak}<span class="cursor"></span>`;
+  renderLadder("ladderList");
+  renderLadder("ladderList2");
+  renderProBadgeSlots();
+}
+
+function renderLadder(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const tier = currentTier(STATE.score);
+  el.innerHTML = TIERS.map(t=>{
+    const state = t.min < tier.min || t.name===tier.name && STATE.score>=t.min && t!==TIERS[TIERS.length-1] && STATE.score>=t.min ? "" : "";
+    let cls = "";
+    if(t.name === tier.name) cls = "current";
+    else if(STATE.score >= t.min && t.min < tier.min) cls = "done";
+    return `<div class="rung ${cls}">
+      <span></span>
+      <span class="tier-name">${t.name}</span>
+      <span class="tier-score">score ≥ ${t.min}</span>
+    </div>`;
+  }).join("");
+}
+
+/* =========================================================
+   COMPILER (Pyodide)
+========================================================= */
+let pyodide = null;
+const runBtn = document.getElementById("runBtn");
+const outputBox = document.getElementById("outputBox");
+const runCountEl = document.getElementById("runCount");
+
+async function initPyodide(){
+  try{
+    pyodide = await loadPyodide();
+    runBtn.disabled = false;
+    registerCanvasModule();
+    registerPygameModule();
+    document.getElementById("studioRunBtn").disabled = false;
+  }catch(e){
+    outputBox.innerHTML = `<span class="err">Could not load the Python runtime. Check your internet connection and reload.</span>`;
+  }
+}
+initPyodide();
+
+const SNIPPETS = {
+  hello: `print("Hello, PythonRank!")\nname = "World"\nprint(f"Hello, {name}!")`,
+  ifelse: `score = 72\nif score >= 90:\n    print("Grade: A")\nelif score >= 70:\n    print("Grade: B")\nelse:\n    print("Grade: C")`,
+  loop: `total = 0\nfor i in range(1, 6):\n    total += i\n    print(f"i={i} total={total}")\nprint("Sum:", total)`,
+  list: `nums = [1, 2, 3, 4, 5, 6]\nevens = [n for n in nums if n % 2 == 0]\nsquares = [n * n for n in evens]\nprint("Evens:", evens)\nprint("Squares:", squares)`,
+  string: `s = "  Python Rank  "\nprint(repr(s.strip()))\nprint(s.strip().upper())\nprint(s.strip().replace("Rank", "Rocks"))\nprint("py" in s.lower())`,
+  error: `numbers = [1, 2, 3]\nprint(numbers[5])  # this will raise an IndexError`,
+  oop: `class Animal:\n    def __init__(self, name, sound):\n        self.name = name\n        self.sound = sound\n\n    def speak(self):\n        return f"{self.name} says {self.sound}!"\n\nclass Dog(Animal):          # inheritance\n    def __init__(self, name):\n        super().__init__(name, "Woof")\n\n    def fetch(self):\n        return f"{self.name} fetches the ball!"\n\nanimals = [Animal("Cat", "Meow"), Dog("Rex")]\nfor a in animals:\n    print(a.speak())\n\nprint(animals[1].fetch())`,
+  assistant: `def jarvis_reply(command):\n    command = command.lower()\n    if "name" in command:\n        return "I'm JarvisMini, your Python assistant."\n    elif "python" in command:\n        return "Python is a high-level, readable language created in 1991."\n    elif "time" in command:\n        return "I don't track real time here — try datetime.datetime.now() in a real script."\n    else:\n        return "I don't know that one yet — teach me by adding another elif!"\n\nprint("JarvisMini ready. Type 'bye' to stop.")\nwhile True:\n    command = input("You: ")\n    if command.lower() == "bye":\n        print("Jarvis: Goodbye!")\n        break\n    print("Jarvis:", jarvis_reply(command))`,
+};
+document.querySelectorAll(".chip[data-snippet]").forEach(c=>{
+  c.addEventListener("click", ()=>{
+    codeCM.setValue(SNIPPETS[c.dataset.snippet]);
+    goTo("compiler");
+  });
+});
+
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  codeCM.setValue("");
+  setRunStatus(null);
+});
+
+runBtn.addEventListener("click", runCode);
+
+let liveStdin = [];
+
+function setRunStatus(status, errorText){
+  const pane = document.getElementById("outputPane");
+  const dot = document.getElementById("runStatusDot");
+  const explainBtn = document.getElementById("explainErrorBtn");
+  const explainBox = document.getElementById("errorExplainBox");
+  pane.classList.remove("status-ok", "status-err");
+  dot.classList.remove("ok", "err");
+  explainBox.style.display = "none";
+  explainBox.innerHTML = "";
+  if(status){
+    pane.classList.add("status-" + status);
+    dot.classList.add(status);
+  }
+  if(status === "err" && errorText){
+    lastErrorText = errorText;
+    explainBtn.style.display = "inline-block";
+  } else {
+    explainBtn.style.display = "none";
+    lastErrorText = "";
+  }
+}
+let lastErrorText = "";
+
+async function runCode(){
+  if(!pyodide) return;
+  liveStdin = [];
+  runBtn.disabled = true;
+  runBtn.textContent = "running…";
+  setRunStatus(null);
+  outputBox.innerHTML = `<span class="muted-line">Running…</span>`;
+  await executeOnce();
+}
+
+async function executeOnce(){
+  const code = codeCM.getValue();
+  try{
+    pyodide.globals.set("__pr_user_code", code);
+    pyodide.globals.set("__pr_stdin_lines", pyodide.toPy(liveStdin));
+    const wrapper = `
+import sys, io, traceback, builtins
+
+class __PrNeedInput(BaseException):
+    pass
+
+__pr_stdin_idx = 0
+def __pr_input(p=""):
+    global __pr_stdin_idx
+    sys.stdout.write(str(p))
+    if __pr_stdin_idx < len(__pr_stdin_lines):
+        __pr_value = __pr_stdin_lines[__pr_stdin_idx]
+        __pr_stdin_idx += 1
+    else:
+        raise __PrNeedInput()
+    sys.stdout.write(__pr_value + "\\n")
+    return __pr_value
+builtins.input = __pr_input
+__pr_buf = io.StringIO()
+__pr_old_stdout = sys.stdout
+sys.stdout = __pr_buf
+__pr_error = None
+__pr_need_input = False
+try:
+    exec(compile(__pr_user_code, "<pythonrank>", "exec"), {"__name__": "__main__"})
+except __PrNeedInput:
+    __pr_need_input = True
+except Exception:
+    __pr_error = traceback.format_exc()
+sys.stdout = __pr_old_stdout
+__pr_output = __pr_buf.getvalue()
+`;
+    await pyodide.runPythonAsync(wrapper);
+    const out = pyodide.globals.get("__pr_output");
+    const err = pyodide.globals.get("__pr_error");
+    const needInput = pyodide.globals.get("__pr_need_input");
+
+    if(needInput){
+      renderLiveConsole(out);
+      return;
+    }
+
+    if(liveStdin.length === 0){
+      await typewriteOutput([
+        out ? {text: out, cls: "ok"} : null,
+        err ? {text: err, cls: "err"} : null,
+      ].filter(Boolean), !out && !err);
+    } else {
+      let html = "";
+      if(out) html += `<span class="ok">${escapeHtml(out)}</span>`;
+      if(err) html += `<span class="err">${escapeHtml(err)}</span>`;
+      if(!out && !err) html = `<span class="muted-line">(no output)</span>`;
+      outputBox.innerHTML = html;
+    }
+    setRunStatus(err ? "err" : "ok", err);
+
+    STATE.runs++;
+    if(err){
+      STATE.lastRunHadError = true;
+    } else if(STATE.lastRunHadError){
+      unlockAchievement("bug_squasher");
+      STATE.lastRunHadError = false;
+    }
+    if(STATE.runs >= 10) unlockAchievement("compiler_10");
+    saveState();
+    runCountEl.textContent = STATE.runs + " runs";
+    runBtn.disabled = false;
+    runBtn.textContent = "▶ Run";
+  }catch(e){
+    outputBox.innerHTML = `<span class="err">${escapeHtml(String(e))}</span>`;
+    setRunStatus("err", String(e));
+    runBtn.disabled = false;
+    runBtn.textContent = "▶ Run";
+  }
+}
+
+function renderLiveConsole(outText){
+  outputBox.innerHTML = `<span class="ok">${escapeHtml(outText)}</span>`;
+  const inp = document.createElement("input");
+  inp.type = "text";
+  inp.className = "live-stdin-input";
+  inp.autocomplete = "off";
+  inp.spellcheck = false;
+  outputBox.appendChild(inp);
+  outputBox.scrollTop = outputBox.scrollHeight;
+  inp.focus();
+  inp.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      liveStdin.push(inp.value);
+      inp.remove();
+      executeOnce();
+    }
+  });
+  runBtn.disabled = true;
+  runBtn.textContent = "waiting for input…";
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+
+/* =========================================================
+   ERROR EXPLAINER
+========================================================= */
+const ERROR_EXPLANATIONS = [
+  {test:/IndentationError.*unexpected indent/is, title:"Unexpected indent",
+   explain:"This line is indented (extra spaces before it) but nothing above it opened a new block — like an if, for, while, or def ending in a colon. Python only expects indentation right after one of those. Fix: remove the extra spaces so this line lines up with the line above it."},
+  {test:/IndentationError.*expected an indented block/is, title:"Missing indent",
+   explain:"The line above ends with a colon (:), which tells Python an indented block should follow — but the next line isn't indented. Fix: indent the line(s) that belong inside that block, usually 4 spaces."},
+  {test:/IndentationError/i, title:"Indentation problem",
+   explain:"Python uses indentation to know what code belongs together. Something about the spacing here doesn't match — check that lines in the same block line up exactly, and that you're not mixing tabs and spaces."},
+  {test:/SyntaxError/i, title:"Syntax error",
+   explain:"Python couldn't understand the structure of this line — often a missing colon, an unmatched bracket or quote, or a typo in a keyword. Check the line the traceback points to, and the one just before it."},
+  {test:/NameError/i, title:"Undefined name",
+   explain:"You used a name (variable or function) that Python doesn't recognize — either it was never created, it's spelled differently from where you defined it, or you're using it before it's defined."},
+  {test:/TypeError/i, title:"Type mismatch",
+   explain:"You're combining or passing values of types that don't work together for this operation — like adding a number to a string, or calling something that isn't actually a function."},
+  {test:/IndexError/i, title:"Index out of range",
+   explain:"You tried to access a position in a list or string that doesn't exist. Indexing starts at 0, and the last valid index is length minus 1."},
+  {test:/KeyError/i, title:"Missing dictionary key",
+   explain:"You tried to access a dictionary key that isn't there. Use .get(key, default) instead of [key] if the key might not exist."},
+  {test:/ZeroDivisionError/i, title:"Division by zero",
+   explain:"Your code divided a number by zero, which is undefined. Check the value of the denominator before dividing."},
+  {test:/AttributeError/i, title:"Attribute doesn't exist",
+   explain:"You called a method or accessed a property that doesn't exist on that object's type — often a typo, or the variable holds a different type than you expected. Try print(type(x)) to check."},
+  {test:/ValueError/i, title:"Invalid value",
+   explain:"The value you passed is the right type but not an acceptable one for what the function expected — e.g. int(\"abc\") fails because \"abc\" isn't a number."},
+  {test:/ModuleNotFoundError/i, title:"Module not available",
+   explain:"That module isn't available in this in-browser Python environment. Most of the standard library works here, but third-party packages usually don't."},
+  {test:/RecursionError/i, title:"Too much recursion",
+   explain:"A function kept calling itself without ever reaching a stopping condition. Check that your recursive function actually has a base case that stops it."},
+];
+
+function explainError(errorText){
+  const match = ERROR_EXPLANATIONS.find(e => e.test.test(errorText));
+  return match || {title:"Error", explain:"Read the last line of the traceback above — it usually names the exact problem and, on the line before it, points to where it happened in your code."};
+}
+
+document.getElementById("explainErrorBtn").addEventListener("click", ()=>{
+  const {title, explain} = explainError(lastErrorText);
+  const box = document.getElementById("errorExplainBox");
+  box.innerHTML = `<span class="exp-title">${escapeHtml(title)}</span>${escapeHtml(explain)}`;
+  box.style.display = "block";
+});
+
+async function typewriteOutput(segments, isEmpty){
+  outputBox.innerHTML = "";
+  if(isEmpty){
+    outputBox.innerHTML = `<span class="muted-line">(no output)</span>`;
+    return;
+  }
+  const cursor = document.createElement("span");
+  cursor.className = "type-cursor";
+  cursor.textContent = "▌";
+  outputBox.appendChild(cursor);
+
+  for(const seg of segments){
+    const span = document.createElement("span");
+    span.className = seg.cls;
+    outputBox.insertBefore(span, cursor);
+    const text = seg.text;
+    const speed = text.length > 500 ? 3 : text.length > 150 ? 8 : 16;
+    let buf = "";
+    for(let i=0;i<text.length;i++){
+      buf += text[i];
+      span.textContent = buf;
+      outputBox.scrollTop = outputBox.scrollHeight;
+      if(i % 2 === 0) await new Promise(r=>setTimeout(r, speed));
+    }
+  }
+}
+
+/* =========================================================
+   GAME & APP STUDIO
+========================================================= */
+const studioCanvas = document.getElementById("studioCanvas");
+const sctx = studioCanvas.getContext("2d");
+const pressedKeys = new Set();
+
+function isTypingTarget(t){
+  return t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA");
+}
+document.addEventListener("keydown", e=>{
+  if(isTypingTarget(e.target)) return;
+  pressedKeys.add(e.key);
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+});
+document.addEventListener("keyup", e=>{
+  if(isTypingTarget(e.target)) return;
+  pressedKeys.delete(e.key);
+});
+
+function registerCanvasModule(){
+  const canvasModule = {
+    WIDTH: studioCanvas.width,
+    HEIGHT: studioCanvas.height,
+    clear(color){ sctx.fillStyle = color || "#0a0f14"; sctx.fillRect(0,0,studioCanvas.width, studioCanvas.height); },
+    rect(x,y,w,h,color){ sctx.fillStyle = color || "#e7edf3"; sctx.fillRect(x,y,w,h); },
+    circle(x,y,r,color){ sctx.beginPath(); sctx.arc(x,y,r,0,Math.PI*2); sctx.fillStyle = color || "#e7edf3"; sctx.fill(); },
+    line(x1,y1,x2,y2,color,lw){ sctx.strokeStyle = color || "#e7edf3"; sctx.lineWidth = lw || 1; sctx.beginPath(); sctx.moveTo(x1,y1); sctx.lineTo(x2,y2); sctx.stroke(); },
+    text(x,y,msg,color,size){ sctx.fillStyle = color || "#e7edf3"; sctx.font = (size || 16) + "px 'JetBrains Mono', monospace"; sctx.fillText(String(msg), x, y); },
+    is_pressed(key){ return pressedKeys.has(key); },
+    log(msg){ document.getElementById("studioLog").textContent = String(msg); },
+  };
+  pyodide.registerJsModule("canvas", canvasModule);
+}
+
+
+/* ---- pygame-compatible shim ----
+   Real pygame can't run here (no display to attach to), but common
+   pygame *syntax* can — draw.rect/circle/line, Rect, key constants,
+   Clock.tick (no-op timing lives in the speed slider instead). The one
+   real requirement: structure your code with a top-level update()
+   function (like every other Studio game), not a `while running:` loop —
+   an unbroken while-loop would freeze the tab, since there's no thread
+   to run it on in the background. */
+function pgColor(c){
+  if(typeof c === "string") return c;
+  if(c && typeof c.toJs === "function"){
+    const a = c.toJs();
+    return a.length > 3 ? `rgba(${a[0]},${a[1]},${a[2]},${a[3]/255})` : `rgb(${a[0]},${a[1]},${a[2]})`;
+  }
+  if(Array.isArray(c)) return `rgb(${c[0]},${c[1]},${c[2]})`;
+  return "#ffffff";
+}
+function pgTuple(t){ return (t && typeof t.toJs === "function") ? t.toJs() : t; }
+function pgRectVals(r){
+  if(r && typeof r.x === "number") return [r.x, r.y, r.width, r.height];
+  const a = pgTuple(r);
+  return a ? [a[0], a[1], a[2], a[3]] : [0,0,0,0];
+}
+function makePgRect(x,y,w,h){
+  return {
+    x, y, width: w, height: h,
+    get centerx(){ return x + w/2; }, get centery(){ return y + h/2; },
+    get left(){ return x; }, get right(){ return x+w; }, get top(){ return y; }, get bottom(){ return y+h; },
+    colliderect(other){
+      const [ox,oy,ow,oh] = pgRectVals(other);
+      return x < ox+ow && x+w > ox && y < oy+oh && y+h > oy;
+    },
+  };
+}
+
+function registerPygameModule(){
+  const PG_KEYS = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","w","a","s","d","Enter","Escape"];
+  const pgSurface = {
+    fill(color){ sctx.fillStyle = pgColor(color); sctx.fillRect(0,0,studioCanvas.width, studioCanvas.height); },
+    blit(thing, pos){
+      const p = pgTuple(pos);
+      if(thing && thing._pgText !== undefined){
+        sctx.fillStyle = thing._pgColor || "#ffffff";
+        sctx.font = "16px 'JetBrains Mono', monospace";
+        sctx.fillText(thing._pgText, p[0], p[1] + 14);
+      }
+    },
+    get_width(){ return studioCanvas.width; },
+    get_height(){ return studioCanvas.height; },
+  };
+  const pygameModule = {
+    init(){ return [6, 0]; },
+    quit(){},
+    K_UP:"ArrowUp", K_DOWN:"ArrowDown", K_LEFT:"ArrowLeft", K_RIGHT:"ArrowRight",
+    K_w:"w", K_a:"a", K_s:"s", K_d:"d", K_SPACE:" ", K_RETURN:"Enter", K_ESCAPE:"Escape",
+    QUIT: "QUIT",
+    display: {
+      set_mode(size){ return pgSurface; },
+      get_surface(){ return pgSurface; },
+      set_caption(title){},
+      flip(){},
+      update(){},
+    },
+    draw: {
+      rect(surf, color, rect, width){
+        const [x,y,w,h] = pgRectVals(rect);
+        if(width){ sctx.strokeStyle = pgColor(color); sctx.lineWidth = width; sctx.strokeRect(x,y,w,h); }
+        else { sctx.fillStyle = pgColor(color); sctx.fillRect(x,y,w,h); }
+      },
+      circle(surf, color, center, radius, width){
+        const c = pgTuple(center);
+        sctx.beginPath(); sctx.arc(c[0], c[1], radius, 0, Math.PI*2);
+        if(width){ sctx.strokeStyle = pgColor(color); sctx.lineWidth = width; sctx.stroke(); }
+        else { sctx.fillStyle = pgColor(color); sctx.fill(); }
+      },
+      line(surf, color, start, end, width){
+        const s = pgTuple(start), e = pgTuple(end);
+        sctx.strokeStyle = pgColor(color); sctx.lineWidth = width || 1;
+        sctx.beginPath(); sctx.moveTo(s[0],s[1]); sctx.lineTo(e[0],e[1]); sctx.stroke();
+      },
+    },
+    time: { Clock(){ return { tick(fps){ return 16; }, get_fps(){ return 60; } }; } },
+    event: { get(){ return pyodide.toPy([]); } },
+    key: {
+      get_pressed(){
+        const state = {};
+        PG_KEYS.forEach(k => { state[k] = pressedKeys.has(k); });
+        return pyodide.toPy(state);
+      },
+    },
+    Rect(x,y,w,h){ return makePgRect(x,y,w,h); },
+    font: {
+      Font(name, size){ return { render(text, aa, color){ return {_pgText: String(text), _pgColor: pgColor(color)}; } }; },
+      SysFont(name, size){ return { render(text, aa, color){ return {_pgText: String(text), _pgColor: pgColor(color)}; } }; },
+      init(){},
+    },
+  };
+  pyodide.registerJsModule("pygame", pygameModule);
+}
+
+const STUDIO_SNIPPETS = {
+  snake:
+`import canvas
+import random
+
+CELL = 20
+COLS = canvas.WIDTH // CELL
+ROWS = canvas.HEIGHT // CELL
+
+snake = [(5, 5), (4, 5), (3, 5)]
+direction = (1, 0)
+food = (10, 5)
+score = 0
+game_over = False
+
+def spawn_food():
+    global food
+    food = (random.randint(0, COLS - 1), random.randint(0, ROWS - 1))
+
+def update():
+    global snake, direction, food, score, game_over
+
+    if game_over:
+        canvas.text(canvas.WIDTH // 2 - 44, canvas.HEIGHT // 2, "GAME OVER", "#ff5c5c", 22)
+        return
+
+    if canvas.is_pressed("ArrowUp") and direction != (0, 1):
+        direction = (0, -1)
+    elif canvas.is_pressed("ArrowDown") and direction != (0, -1):
+        direction = (0, 1)
+    elif canvas.is_pressed("ArrowLeft") and direction != (1, 0):
+        direction = (-1, 0)
+    elif canvas.is_pressed("ArrowRight") and direction != (-1, 0):
+        direction = (1, 0)
+
+    hx, hy = snake[0]
+    dx, dy = direction
+    new_head = (hx + dx, hy + dy)
+
+    if not (0 <= new_head[0] < COLS and 0 <= new_head[1] < ROWS) or new_head in snake:
+        game_over = True
+        return
+
+    if new_head == food:
+        snake = [new_head] + snake
+        score += 1
+        spawn_food()
+    else:
+        snake = [new_head] + snake[:-1]
+
+    canvas.clear("#0a0f14")
+    fx, fy = food
+    canvas.rect(fx * CELL, fy * CELL, CELL, CELL, "#ffd43b")
+    for i, (x, y) in enumerate(snake):
+        canvas.rect(x * CELL, y * CELL, CELL - 1, CELL - 1, "#3ddc84" if i == 0 else "#4b8bbe")
+    canvas.text(6, 16, "Score: " + str(score), "#e7edf3", 14)
+`,
+  ball:
+`import canvas
+
+x, y = 50.0, 50.0
+vx, vy = 3.0, 2.0
+r = 12
+
+def update():
+    global x, y, vx, vy
+    x += vx
+    y += vy
+    if x - r < 0 or x + r > canvas.WIDTH:
+        vx *= -1
+    if y - r < 0 or y + r > canvas.HEIGHT:
+        vy *= -1
+    canvas.clear("#0a0f14")
+    canvas.circle(x, y, r, "#ffd43b")
+`,
+  blank:
+`import canvas
+
+def update():
+    canvas.clear("#0a0f14")
+    canvas.text(20, 40, "Draw something here!", "#e7edf3", 18)
+`,
+  pygamelite:
+`import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((400, 300))
+clock = pygame.time.Clock()
+
+x, y = 50, 50
+vx, vy = 3, 2
+color = (255, 212, 59)
+
+# Runs once per tick — no while-loop needed, the Studio drives the loop
+def update():
+    global x, y, vx, vy
+    x += vx
+    y += vy
+    if x < 15 or x > 385:
+        vx *= -1
+    if y < 15 or y > 285:
+        vy *= -1
+
+    screen.fill((10, 15, 20))
+    pygame.draw.circle(screen, color, (x, y), 15)
+    pygame.display.flip()
+    clock.tick(60)
+`,
+};
+/* studio starter code is set by restoreCodeDraft() during INIT below */
+
+document.querySelectorAll(".chip[data-studio]").forEach(c=>{
+  c.addEventListener("click", ()=>{
+    studioCM.setValue(STUDIO_SNIPPETS[c.dataset.studio]);
+  });
+});
+
+let studioInterval = null;
+let studioUpdateFn = null;
+
+function studioTick(){
+  try{
+    studioUpdateFn();
+  }catch(e){
+    document.getElementById("studioErrorBox").textContent = (e && e.message) ? e.message : String(e);
+    stopStudio();
+  }
+}
+
+function stopStudio(){
+  if(studioInterval){ clearInterval(studioInterval); studioInterval = null; }
+  document.getElementById("studioRunBtn").disabled = false;
+  document.getElementById("studioStopBtn").disabled = true;
+  document.getElementById("studioStatus").textContent = "stopped";
+}
+
+document.getElementById("studioStopBtn").addEventListener("click", stopStudio);
+
+document.getElementById("studioSpeed").addEventListener("input", ()=>{
+  if(studioInterval){
+    clearInterval(studioInterval);
+    const speed = parseInt(document.getElementById("studioSpeed").value, 10) || 120;
+    studioInterval = setInterval(studioTick, speed);
+  }
+});
+
+document.getElementById("studioRunBtn").addEventListener("click", async ()=>{
+  if(!pyodide) return;
+  stopStudio();
+  document.getElementById("studioErrorBox").textContent = "";
+  document.getElementById("studioLog").textContent = "";
+  document.getElementById("studioStatus").textContent = "starting…";
+  const code = studioCM.getValue();
+  pyodide.globals.set("__studio_source", code);
+  const wrapper = `
+import traceback
+__studio_ns = {}
+__studio_error = None
+try:
+    exec(compile(__studio_source, "<studio>", "exec"), __studio_ns)
+except ModuleNotFoundError as e:
+    if "pyglet" in str(e) or "arcade" in str(e):
+        __studio_error = ("This Studio can't run " + str(e).split("'")[1] + " — there's no real display to render to in the browser.\\n"
+                           "Use the built-in game APIs instead: import canvas, or import pygame (a lightweight compatible shim).\\n"
+                           "See the API reference cards below the editor for the full function list.")
+    else:
+        __studio_error = traceback.format_exc()
+except Exception:
+    __studio_error = traceback.format_exc()
+__studio_update = __studio_ns.get("update") if __studio_error is None else None
+`;
+  try{
+    await pyodide.runPythonAsync(wrapper);
+    const err = pyodide.globals.get("__studio_error");
+    if(err){
+      document.getElementById("studioErrorBox").textContent = err;
+      document.getElementById("studioStatus").textContent = "error";
+      return;
+    }
+    const updateFn = pyodide.globals.get("__studio_update");
+    if(typeof updateFn !== "function"){
+      document.getElementById("studioErrorBox").textContent = "Define a function named update() that draws one frame — see the example snippets above.";
+      document.getElementById("studioStatus").textContent = "error";
+      return;
+    }
+    studioUpdateFn = updateFn;
+    const speed = parseInt(document.getElementById("studioSpeed").value, 10) || 120;
+    studioInterval = setInterval(studioTick, speed);
+    document.getElementById("studioRunBtn").disabled = true;
+    document.getElementById("studioStopBtn").disabled = false;
+    document.getElementById("studioStatus").textContent = "running";
+    unlockAchievement("game_maker");
+    saveState();
+  }catch(e){
+    document.getElementById("studioErrorBox").textContent = (e && e.message) ? e.message : String(e);
+    document.getElementById("studioStatus").textContent = "error";
+  }
+});
+
+/* =========================================================
+   QUIZ DATA
+========================================================= */
+const QUESTIONS = [
+  // HISTORY
+  {cat:"History", q:"Who created the Python language?", opts:["Guido van Rossum","Dennis Ritchie","James Gosling","Bjarne Stroustrup"], a:0},
+  {cat:"History", q:"In which year was Python first released?", opts:["1985","1991","1995","2000"], a:1},
+  {cat:"History", q:"Python's name was inspired by:", opts:["A snake documentary","Monty Python's Flying Circus","A NASA project","The creator's cat"], a:1},
+  {cat:"History", q:"Which major version of Python (released 2008) intentionally broke backward compatibility?", opts:["Python 1.6","Python 2.7","Python 3.0","Python 4.0"], a:2},
+  // VARIABLES
+  {cat:"Variables", q:"Which of these is a valid Python variable name?", opts:["2cool","_score","class","my-var"], a:1},
+  {cat:"Variables", q:"What does `x, y = y, x` do?", opts:["Syntax error","Swaps x and y","Deletes x and y","Only works with numbers"], a:1},
+  {cat:"Variables", q:"Python variables are:", opts:["Statically typed","Dynamically typed","Always integers","Constants once set"], a:1},
+  {cat:"Variables", q:"What is the output of `x = 5; x += 1; print(x)`?", opts:["5","6","51","Error"], a:1},
+  // CONDITIONS
+  {cat:"Conditions", q:"Which keyword checks an additional condition after `if`?", opts:["elseif","elif","else if","or"], a:1},
+  {cat:"Conditions", q:"What does `if not x:` do when x = 0?", opts:["Block runs","Block skipped","SyntaxError","x becomes 1"], a:0},
+  {cat:"Conditions", q:"What is the result of `5 == 5.0`?", opts:["False","True","Error","None"], a:1},
+  {cat:"Conditions", q:"Which operator means logical AND in Python?", opts:["&&","and","AND","&"], a:1},
+  // LOOPS
+  {cat:"Loops", q:"How many times does `for i in range(5):` run?", opts:["4","5","6","Infinite"], a:1},
+  {cat:"Loops", q:"Which statement exits a loop immediately?", opts:["continue","pass","break","exit"], a:2},
+  {cat:"Loops", q:"Which statement skips to the next iteration?", opts:["break","continue","return","stop"], a:1},
+  {cat:"Loops", q:"What does `while True:` create (without a break)?", opts:["Syntax error","An infinite loop","A single iteration","A crash immediately"], a:1},
+  {cat:"Loops", q:"What does `range(2, 10, 2)` produce?", opts:["2,4,6,8","2,4,6,8,10","2,3,4..9","0,2,4,6,8"], a:0},
+  // LISTS
+  {cat:"Lists", q:"Which method adds an item to the end of a list?", opts:["add()","append()","push()","insert(0)"], a:1},
+  {cat:"Lists", q:"What is `[1,2,3][-1]`?", opts:["1","2","3","Error"], a:2},
+  {cat:"Lists", q:"What does `list(range(3))` return?", opts:["[0,1,2]","[1,2,3]","(0,1,2)","3"], a:0},
+  {cat:"Lists", q:"How do you get the length of a list `nums`?", opts:["nums.length()","len(nums)","nums.len()","size(nums)"], a:1},
+  {cat:"Lists", q:"What does `[1,2] + [3,4]` produce?", opts:["[4,6]","[1,2,3,4]","Error","[1,2,[3,4]]"], a:1},
+  // STRINGS
+  {cat:"Strings", q:"What does `\"Python\"[0:3]` return?", opts:["Pyt","yth","Pyth","Python"], a:0},
+  {cat:"Strings", q:"Which method converts a string to uppercase?", opts:[".toUpper()",".upper()",".capitalize()",".upperCase()"], a:1},
+  {cat:"Strings", q:"What is the output of `\"ab\" * 3`?", opts:["ababab","ab3","Error","a b a b a b"], a:0},
+  {cat:"Strings", q:"Which is the correct way to format with an f-string?", opts:["f\"Hi {name}\"","\"Hi %name\"","format(\"Hi\", name)","\"Hi\" + f(name)"], a:0},
+  // NUMBERS (INT/FLOAT)
+  {cat:"Numbers", q:"What is the type of `10 / 2` in Python 3?", opts:["int","float","str","bool"], a:1},
+  {cat:"Numbers", q:"What is the type of `10 // 2`?", opts:["int","float","str","complex"], a:0},
+  {cat:"Numbers", q:"What does `int(\"7\") + 3` evaluate to?", opts:["\"73\"","10","Error","7.3"], a:1},
+  {cat:"Numbers", q:"What is `2 ** 3`?", opts:["6","8","9","5"], a:1},
+  // INTERVIEW / MIXED
+  {cat:"Interview", q:"Which built-in checks a value's data type?", opts:["typeof()","type()","kindof()","gettype()"], a:1},
+  {cat:"Interview", q:"What does `len(\"\")` return?", opts:["None","Error","0","1"], a:2},
+  {cat:"Interview", q:"Which of these is immutable in Python?", opts:["list","dict","set","tuple"], a:3},
+  {cat:"Interview", q:"What does PEP 8 refer to?", opts:["A Python version","A style guide","A testing library","A package manager"], a:1},
+];
+
+const CATEGORIES = ["All", ...new Set(QUESTIONS.map(q=>q.cat))];
+let quizFilter = "All";
+let quizPool = [];
+let quizIndex = 0;
+
+function buildQuizPool(){
+  quizPool = QUESTIONS
+    .filter(q => quizFilter==="All" || q.cat===quizFilter)
+    .map((q,i)=>({...q, idx:i}))
+    .sort(()=>Math.random()-0.5);
+  quizIndex = 0;
+}
+
+function renderQuizFilters(){
+  const wrap = document.getElementById("quizFilters");
+  wrap.innerHTML = CATEGORIES.map(c=>
+    `<button data-cat="${c}" class="${c===quizFilter?"active":""}">${c}</button>`
+  ).join("");
+  wrap.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      quizFilter = b.dataset.cat;
+      renderQuizFilters();
+      buildQuizPool();
+      renderQuestion();
+    });
+  });
+}
+
+function renderQuestion(){
+  const area = document.getElementById("quizArea");
+  if(quizPool.length===0){ buildQuizPool(); }
+  if(quizIndex >= quizPool.length){
+    area.innerHTML = `<div class="quiz-card">
+      <h3>Set complete 🎉</h3>
+      <p class="lede">You've been through every question in this category. Score: <b>${STATE.score}</b>. Streak record: <b>${STATE.bestStreak}</b>.</p>
+      <button class="btn primary small" id="restartQuiz">Restart set</button>
+    </div>`;
+    document.getElementById("restartQuiz").addEventListener("click", ()=>{ buildQuizPool(); renderQuestion(); });
+    return;
+  }
+  const item = quizPool[quizIndex];
+  area.innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-progress">question ${quizIndex+1} / ${quizPool.length} · <span class="tag">${item.cat}</span> &nbsp; <span class="streak-pill">streak ${STATE.streak}</span></div>
+      <div class="quiz-q">${item.q}</div>
+      <div class="options" id="optWrap">
+        ${item.opts.map((o,i)=>`<button class="opt" data-i="${i}"><code>${String.fromCharCode(65+i)}</code>&nbsp; ${o}</button>`).join("")}
+      </div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <div class="quiz-actions">
+        <span class="mono" style="color:var(--muted); font-size:.78rem;">score: <b style="color:var(--yellow)">${STATE.score}</b></span>
+        <button class="btn ghost small" id="skipBtn">Skip →</button>
+      </div>
+    </div>`;
+
+  document.querySelectorAll("#optWrap .opt").forEach(btn=>{
+    btn.addEventListener("click", ()=>answerQuestion(item, parseInt(btn.dataset.i)));
+  });
+  document.getElementById("skipBtn").addEventListener("click", ()=>{ quizIndex++; renderQuestion(); });
+}
+
+function answerQuestion(item, chosen){
+  document.querySelectorAll("#optWrap .opt").forEach(b=>b.disabled = true);
+  const correctIdx = item.a;
+  const chosenBtn = document.querySelector(`#optWrap .opt[data-i="${chosen}"]`);
+  const correctBtn = document.querySelector(`#optWrap .opt[data-i="${correctIdx}"]`);
+  correctBtn.classList.add("correct");
+  const feedback = document.getElementById("quizFeedback");
+
+  if(chosen === correctIdx){
+    STATE.score += 5;
+    STATE.streak += 1;
+    STATE.bestStreak = Math.max(STATE.bestStreak, STATE.streak);
+    feedback.innerHTML = `<span style="color:var(--green)">Correct!</span> +5 points.`;
+    unlockAchievement("first_blood");
+    if(STATE.streak >= 5) unlockAchievement("streak5");
+    markCategoryProgress(item.cat, true);
+  } else {
+    chosenBtn.classList.add("wrong");
+    STATE.streak = 0;
+    feedback.innerHTML = `<span style="color:var(--red)">Not quite.</span> Correct answer: <b>${item.opts[correctIdx]}</b>`;
+    markCategoryProgress(item.cat, false);
+  }
+  saveState();
+  renderStatus();
+
+  setTimeout(()=>{ quizIndex++; renderQuestion(); }, 1100);
+}
+
+function markCategoryProgress(cat, correct){
+  if(!STATE.categoryPerfect[cat]) STATE.categoryPerfect[cat] = {correct:0, total:0};
+  STATE.categoryPerfect[cat].total++;
+  if(correct) STATE.categoryPerfect[cat].correct++;
+  const catTotal = QUESTIONS.filter(q=>q.cat===cat).length;
+  const rec = STATE.categoryPerfect[cat];
+  if(correct && rec.correct >= catTotal){
+    if(cat==="History") unlockAchievement("history_buff");
+    if(cat==="Loops") unlockAchievement("loop_master");
+    if(cat==="Lists") unlockAchievement("list_master");
+    if(cat==="Strings") unlockAchievement("string_master");
+  }
+}
+
+function unlockAchievement(id){
+  if(!STATE.achievements.includes(id)){
+    STATE.achievements.push(id);
+    saveState();
+  }
+}
+
+/* =========================================================
+   LEARN TOPICS
+========================================================= */
+const TOPICS = [
+  {id:"history", title:"Python History", tag:"background", level:"Basics",
+    body:"Python was created by Guido van Rossum and first released in 1991, with the goal of being readable and expressive rather than terse. It borrows ideas from languages like ABC and C, but drops semicolons and curly braces in favor of significant whitespace \u2014 indentation is not a style choice in Python, it's the syntax. Python 2 and Python 3 (2008) are not fully compatible; all modern code, and everything on this site, targets Python 3. Knowing this history explains a lot of `why` questions beginners ask, like why indentation matters so much.",
+    code:`import sys\nprint("This Python version:", sys.version.split()[0])\nprint("Fun fact: Python is named after Monty Python's Flying Circus.")`},
+  {id:"variables", title:"Variables", tag:"basics", level:"Basics",
+    body:"A variable is a name bound to a value in memory \u2014 no upfront type declaration is needed, because Python figures out the type from what you assign. This is called dynamic typing, and it means the same name can point to an int, then later a string, over the life of a program (usually a bad idea in real code, but legal). Naming rules: letters, digits and underscores only, can't start with a digit, and can't be a reserved word like `class` or `if`. A common beginner mistake is confusing `=` (assignment) with `==` (comparison) \u2014 the first one sets a value, the second one asks a question.",
+    code:`age = 21\nname = "Ada"\nis_admin = False\nprint(type(age), type(name), type(is_admin))\n\nage = "twenty-one"   # legal in Python — the name just points elsewhere now\nprint(type(age))`},
+  {id:"conditions", title:"If / Else", tag:"control flow", level:"Basics",
+    body:"Conditions branch your program using `if`, `elif` and `else`, and Python relies on indentation (not braces) to mark each block \u2014 a consistent 4 spaces is the community standard (PEP 8). Only one branch runs: Python checks each condition top to bottom and stops at the first one that's true, falling through to `else` if none match. You can chain multiple `elif`s for more than two outcomes, and combine conditions with `and`, `or`, and `not`. A frequent gotcha: comparing floats for exact equality (`0.1 + 0.2 == 0.3`) can silently fail due to floating-point rounding.",
+    code:`temp = 30\nif temp > 35:\n    print("Hot")\nelif temp > 20:\n    print("Warm")\nelse:\n    print("Cold")\n\n# combining conditions\nage, has_ticket = 17, True\nif age >= 18 or has_ticket:\n    print("You can enter")`},
+  {id:"loops", title:"Loops", tag:"control flow", level:"Basics",
+    body:"`for` iterates over anything iterable \u2014 a list, a string, a range, a dictionary's keys \u2014 running the block once per item. `while` instead repeats as long as a condition stays true, which is better when you don't know the number of iterations in advance. `break` exits the loop immediately; `continue` skips straight to the next iteration. A lesser-known feature: both loops support an `else` clause that runs only if the loop finished without hitting a `break` \u2014 useful for search-style logic.",
+    code:`for i in range(5):\n    if i == 3:\n        continue\n    print(i)\n\nn = 0\nwhile n < 3:\n    print("while:", n)\n    n += 1\n\nfor x in [2, 4, 6]:\n    if x % 2 != 0:\n        print("found an odd one")\n        break\nelse:\n    print("all even — loop completed without a break")`},
+  {id:"lists", title:"Lists", tag:"data structures", level:"Basics",
+    body:"Lists are ordered, mutable collections written with square brackets \u2014 you can add, remove, sort, and change items after creation. Indexing starts at 0, negative indexes count from the end (`-1` is the last item), and slicing (`lst[1:3]`) grabs a sub-range without modifying the original. List comprehensions (`[x*x for x in nums]`) build a new list in one readable line instead of a multi-line loop with `.append()`. Because lists are mutable, assigning `b = a` doesn't copy a list \u2014 both names point to the same list in memory, so changing one changes the other (use `a.copy()` or `list(a)` to actually duplicate it).",
+    code:`fruits = ["apple", "banana", "cherry"]\nfruits.append("date")\nprint(fruits[1:3])\nprint([f.upper() for f in fruits])\n\nnums = [5, 1, 4, 2, 3]\nprint(sorted(nums))\nprint(sorted(nums, reverse=True))`},
+  {id:"strings", title:"Strings", tag:"data types", level:"Basics",
+    body:"Strings are immutable sequences of characters \u2014 every method like `.upper()` or `.replace()` returns a brand-new string rather than changing the original in place. Slicing works exactly like it does on lists (`s[1:4]`), and strings support `+` for concatenation and `*` for repetition. The modern way to build strings is an f-string \u2014 `f\"{name} is {age}\"` \u2014 which is clearer and faster than older `%` formatting or `.format()`. Watch for the difference between `.strip()` (removes leading/trailing whitespace) and `.replace(' ', '')` (removes all spaces, everywhere).",
+    code:`s = "Python Rank"\nprint(s.lower())\nprint(s.split())\nprint(s.replace("Rank", "Rocks"))\n\nname, score = "Ada", 97\nprint(f"{name} scored {score}% on the quiz")`},
+  {id:"numbers", title:"Int & Float", tag:"data types", level:"Basics",
+    body:"`int` holds whole numbers with no size limit (Python grows them automatically), while `float` holds decimals using standard floating-point representation \u2014 which means it's not perfectly precise for money or exact fractions. `/` always returns a float even for two ints, `//` performs floor (integer) division, `%` gives the remainder, and `**` raises to a power. Convert between types with `int()`, `float()`, and `str()` \u2014 `int(\"7\")` turns text into a number, but `int(\"7.5\")` raises an error (you'd need `int(float(\"7.5\"))`).",
+    code:`a = 7\nb = 2\nprint(a / b)   # float division\nprint(a // b)  # floor division\nprint(a % b)   # remainder\nprint(a ** b)  # power\n\nprint(int("42") + 8)\nprint(round(3.14159, 2))`},
+  {id:"functions", title:"Functions", tag:"reuse", level:"Basics",
+    body:"`def` defines a reusable block of code you can call by name instead of repeating logic everywhere. Functions can take parameters, give them default values (`def f(x, y=0):`), and hand back a result with `return` \u2014 a function without a `return` implicitly returns `None`. Keeping functions small and focused on one task makes code far easier to test and debug. Parameters can be passed positionally or by keyword name, and keyword arguments make a call more readable when there are several optional settings.",
+    code:`def greet(name, excited=False):\n    return f"Hello, {name}!" + ("!!" if excited else "")\n\nprint(greet("PythonRank"))\nprint(greet("PythonRank", excited=True))\nprint(greet(name="Ada"))`},
+  {id:"dictionaries", title:"Dictionaries", tag:"data structures", level:"Intermediate",
+    body:"A dictionary stores key\u2013value pairs, giving near-instant lookup by key instead of scanning a list one item at a time. Access a value with `d[key]`, but that raises a `KeyError` if the key is missing \u2014 `.get(key, default)` avoids that by returning a fallback instead. `.items()` lets you loop over both keys and values at once, while `.keys()` and `.values()` give you just one side. Since Python 3.7, dictionaries preserve insertion order, which many beginners don't expect but now rely on.",
+    code:`student = {"name": "Ada", "grade": "A", "age": 22}\nfor key, value in student.items():\n    print(key, "->", value)\n\nstudent["age"] += 1\nprint(student.get("email", "no email on file"))`},
+  {id:"tuples", title:"Tuples", tag:"data structures", level:"Intermediate",
+    body:"A tuple is an ordered, immutable collection \u2014 once created, its contents can't change, which makes it a safe choice for fixed groups of values like coordinates or RGB colors. Tuples plug directly into unpacking: `x, y = point` pulls both values out in one line. Because tuples are immutable and hashable, they can be used as dictionary keys, unlike lists. A single-item tuple needs a trailing comma \u2014 `(5,)`, not `(5)` \u2014 since parentheses alone don't create a tuple.",
+    code:`point = (4, 9)\nx, y = point\nprint(f"x={x}, y={y}")\n\ncoords = [(0,0), (1,2), (3,4)]\nfor px, py in coords:\n    print(px + py)`},
+  {id:"sets", title:"Sets", tag:"data structures", level:"Intermediate",
+    body:"A set is an unordered collection of unique values \u2014 adding a duplicate silently does nothing, which makes sets the fastest way to de-duplicate a list (`list(set(my_list))`). Sets support math-style operations: union (`|`) combines them, intersection (`&`) finds what's shared, and difference (`-`) finds what's only in one. Membership checks (`x in my_set`) are extremely fast compared to checking `x in my_list`, which matters once a collection gets large.",
+    code:`a = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\nprint("Union:", a | b)\nprint("Intersection:", a & b)\nprint("Difference:", a - b)\n\nnums = [1, 2, 2, 3, 3, 3]\nprint("De-duplicated:", list(set(nums)))`},
+  {id:"comprehensions", title:"Comprehensions", tag:"syntax", level:"Intermediate",
+    body:"Comprehensions build a new collection in one line by looping (and optionally filtering) inline \u2014 list comprehensions are the most common, but dict and set comprehensions work the same way with `{}` instead of `[]`. They're not just shorter than a for-loop with `.append()` \u2014 they're usually faster too, since Python optimizes the pattern internally. Overusing comprehensions for complex logic can hurt readability, so the rule of thumb is: if it needs more than one condition or a nested loop, a regular for-loop is often clearer.",
+    code:`words = ["python", "is", "fun", "to", "learn"]\nlengths = {w: len(w) for w in words}          # dict comprehension\nshort_words = {w for w in words if len(w) <= 3}  # set comprehension\nprint(lengths)\nprint(short_words)`},
+  {id:"args_kwargs", title:"*args and **kwargs", tag:"functions", level:"Intermediate",
+    body:"`*args` collects any extra positional arguments into a tuple, and `**kwargs` collects extra keyword arguments into a dictionary \u2014 together they let a function accept a flexible, unknown number of inputs. This is exactly how many real library functions (like `print()`) accept a variable number of things. You can mix them with normal parameters as long as the order stays: normal params, then `*args`, then `**kwargs`.",
+    code:`def describe(*args, **kwargs):\n    print("Positional:", args)\n    print("Keyword:", kwargs)\n\ndescribe(1, 2, 3, name="PythonRank", level="advanced")`},
+  {id:"lambda_functional", title:"Lambda & map/filter", tag:"functions", level:"Intermediate",
+    body:"`lambda` writes a small, unnamed function in a single expression \u2014 useful for short, throwaway logic you don't want to name with `def`. It's most commonly paired with `map()` (transform every item in a collection) and `filter()` (keep only the items matching a condition), both of which return lazy iterators that `list()` turns into a real list. For anything more than a one-liner, a named function is almost always more readable than a lambda.",
+    code:`nums = [1, 2, 3, 4, 5, 6]\ndoubled = list(map(lambda n: n * 2, nums))\nevens = list(filter(lambda n: n % 2 == 0, nums))\nprint("Doubled:", doubled)\nprint("Evens:", evens)`},
+  {id:"file_handling", title:"File Handling", tag:"I/O", level:"Intermediate",
+    body:"Use `open(path, mode)` to work with files \u2014 `\"r\"` to read, `\"w\"` to write (overwriting), `\"a\"` to append. The `with` statement is the standard way to open a file because it automatically closes it when the block ends, even if an error happens partway through \u2014 forgetting to close a file manually is a classic source of bugs. Looping directly over an open file object (`for line in f:`) reads it one line at a time without loading the whole thing into memory.",
+    code:`with open("notes.txt", "w") as f:\n    f.write("Hello from PythonRank!\\n")\n    f.write("Second line.\\n")\n\nwith open("notes.txt", "r") as f:\n    for line in f:\n        print(line.strip())`},
+  {id:"modules", title:"Modules & Imports", tag:"ecosystem", level:"Intermediate",
+    body:"A module is just a `.py` file of reusable code; `import module_name` brings the whole thing in, while `from module_name import thing` pulls in just what you need. Python ships with a large standard library (`math`, `datetime`, `random`, and more) that needs no installation at all. For third-party code, `pip install package_name` fetches it from PyPI \u2014 that's how libraries like `pygame`, `requests`, or `numpy` get onto your machine.",
+    code:`import math\nfrom datetime import date\n\nprint(math.sqrt(49))\nprint(round(math.pi, 4))\nprint(date.today().year)`},
+  {id:"oop", title:"Classes & OOP", tag:"advanced", level:"Advanced",
+    body:"A class bundles data and behavior together into a blueprint for objects. `__init__` sets up a new instance's starting state, `self` refers to that specific instance inside every method, and inheritance (`class Dog(Animal):`) lets one class reuse and extend another's behavior via `super()`. Encapsulating rules inside methods \u2014 like refusing to withdraw more money than a bank account holds \u2014 keeps invalid states from happening in the first place, which is the real payoff of OOP over loose functions and dictionaries.",
+    code:`class BankAccount:\n    def __init__(self, owner, balance=0):\n        self.owner = owner\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance += amount\n\n    def withdraw(self, amount):\n        if amount > self.balance:\n            raise ValueError("Insufficient funds")\n        self.balance -= amount\n\nacc = BankAccount("Ada", 100)\nacc.deposit(50)\nacc.withdraw(30)\nprint(acc.owner, acc.balance)`},
+  {id:"exceptions", title:"Exception Handling", tag:"advanced", level:"Advanced",
+    body:"`try`/`except` catches errors at runtime instead of letting the whole program crash, and `finally` always runs afterward whether an error happened or not \u2014 useful for cleanup like closing a connection. You can catch specific exception types (`except ValueError:`) rather than everything, which avoids silently swallowing bugs you didn't anticipate. Defining your own exception by subclassing `Exception` lets you raise errors that are meaningful to your specific program instead of generic ones.",
+    code:`class NegativeValueError(Exception):\n    pass\n\ndef take_sqrt(n):\n    if n < 0:\n        raise NegativeValueError(f"Can't take sqrt of {n}")\n    return n ** 0.5\n\nfor value in [9, -4, 16]:\n    try:\n        print(take_sqrt(value))\n    except NegativeValueError as e:\n        print("Error:", e)\n    finally:\n        print("Checked", value)`},
+  {id:"decorators", title:"Decorators", tag:"advanced", level:"Advanced",
+    body:"A decorator is a function that wraps another function to add behavior \u2014 like logging, timing, or transforming a result \u2014 without touching the original function's code. The `@decorator` syntax placed above a function definition is shorthand for `func = decorator(func)`. Real-world Python leans on this heavily: web frameworks use decorators to register routes, and `@property` turns a method into something that reads like an attribute.",
+    code:`def shout(func):\n    def wrapper(*args, **kwargs):\n        result = func(*args, **kwargs)\n        return result.upper()\n    return wrapper\n\n@shout\ndef greet(name):\n    return f"hello, {name}"\n\nprint(greet("pythonrank"))`},
+  {id:"generators", title:"Generators", tag:"advanced", level:"Advanced",
+    body:"A generator function uses `yield` instead of `return` to produce values one at a time, pausing its state between each one, rather than building an entire sequence in memory upfront. That makes generators ideal for large or even infinite sequences \u2014 like a running Fibonacci feed that never needs to store more than the last two numbers. Any function containing `yield` automatically becomes a generator when called, returning an iterator you can loop over with `for`.",
+    code:`def fibonacci(limit):\n    a, b = 0, 1\n    while a < limit:\n        yield a\n        a, b = b, a + b\n\nfor num in fibonacci(30):\n    print(num, end=" ")\nprint()`},
+  {id:"context_managers", title:"Context Managers", tag:"advanced", level:"Advanced",
+    body:"The `with` statement guarantees setup and cleanup code runs in pairs, even if an error interrupts the block in between \u2014 that's why file handling always uses it. You can build your own by defining `__enter__` (runs at the start) and `__exit__` (runs at the end, error or not) on a class, which is exactly how libraries implement things like database transactions or timers that must always clean up after themselves.",
+    code:`class Timer:\n    def __enter__(self):\n        print("Starting...")\n        return self\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        print("Done.")\n        return False\n\nwith Timer():\n    print("Doing some work")`},
+  {id:"recursion", title:"Recursion", tag:"advanced", level:"Advanced",
+    body:"A recursive function calls itself with a smaller version of the same problem until it reaches a base case that stops the chain \u2014 skip the base case and you get infinite recursion (a crash). Classic examples are factorial and Fibonacci, both clean and intuitive to write recursively, but naive recursive Fibonacci recomputes the same values repeatedly and gets slow fast \u2014 a preview of why techniques like memoization exist.",
+    code:`def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint(factorial(6))\n\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n-1) + fib(n-2)\n\nprint([fib(i) for i in range(8)])`},
+  {id:"games", title:"Making Games in Python", tag:"game dev", level:"Advanced",
+    body:"Every game \u2014 Snake included \u2014 boils down to one loop: read input, update state, render the screen, repeat. This demo builds that loop with nothing but lists and print(), simulating a Snake game move by move as ASCII frames, no libraries required. For real-time keyboard input and graphics, the standard next step is the `pygame` library \u2014 or the Game & App Studio tab on this site, which gives your code an actual canvas and live keyboard input using the exact same loop pattern.",
+    code:`WIDTH, HEIGHT = 10, 6\nsnake = [(2, 3), (1, 3), (0, 3)]   # head is first\nfood = (6, 3)\nmoves = ["RIGHT"] * 4 + ["DOWN"] * 2 + ["RIGHT"] * 2\nDELTA = {"UP": (0, -1), "DOWN": (0, 1), "LEFT": (-1, 0), "RIGHT": (1, 0)}\n\ndef render(snake, food):\n    grid = [["." for _ in range(WIDTH)] for _ in range(HEIGHT)]\n    fx, fy = food\n    grid[fy][fx] = "F"\n    for i, (x, y) in enumerate(snake):\n        grid[y][x] = "H" if i == 0 else "o"\n    print("\\n".join("".join(row) for row in grid))\n    print()\n\nfor move in moves:\n    dx, dy = DELTA[move]\n    hx, hy = snake[0]\n    new_head = (hx + dx, hy + dy)\n\n    if new_head == food:\n        snake = [new_head] + snake        # grow: keep the tail\n        food = (2, 1)                      # demo: fixed next food spot\n    else:\n        snake = [new_head] + snake[:-1]    # move: drop the tail\n\n    hit_wall = not (0 <= new_head[0] < WIDTH and 0 <= new_head[1] < HEIGHT)\n    hit_self = new_head in snake[1:]\n    if hit_wall or hit_self:\n        print("Game over!")\n        break\n\n    render(snake, food)\n\nprint("Final snake length:", len(snake))`},
+];
+
+function levelColor(level){
+  if(level === "Basics") return "var(--green)";
+  if(level === "Intermediate") return "var(--blue)";
+  return "var(--yellow)";
+}
+
+let learnLevelFilter = "All";
+const LEARN_LEVELS = ["All", "Basics", "Intermediate", "Advanced"];
+
+function renderLearnLevelFilters(){
+  const wrap = document.getElementById("learnLevelFilters");
+  wrap.innerHTML = LEARN_LEVELS.map(l=>
+    `<button data-level="${l}" class="${l===learnLevelFilter?"active":""}">${l}</button>`
+  ).join("");
+  wrap.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      learnLevelFilter = b.dataset.level;
+      renderLearnLevelFilters();
+      renderTopicGrid();
+    });
+  });
+}
+
+function renderTopicGrid(){
+  const grid = document.getElementById("topicGrid");
+  const items = TOPICS.filter(t => learnLevelFilter==="All" || t.level===learnLevelFilter);
+  grid.innerHTML = items.map(t=>`
+    <div class="card topic-card" data-id="${t.id}">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <span class="tag">${t.tag}</span>
+        <span class="mono" style="font-size:.66rem; color:${levelColor(t.level)}; border:1px solid ${levelColor(t.level)}55; padding:2px 7px; border-radius:20px;">${t.level}</span>
+      </div>
+      <h4 style="margin-top:8px;">${t.title}</h4>
+      <p style="color:var(--muted); font-size:.85rem; margin:0;">${t.body.slice(0,110)}…</p>
+    </div>`).join("");
+  grid.querySelectorAll(".topic-card").forEach(c=>{
+    c.addEventListener("click", ()=>openTopic(c.dataset.id));
+  });
+}
+
+function openTopic(id){
+  const t = TOPICS.find(t=>t.id===id);
+  const detail = document.getElementById("topicDetail");
+  detail.classList.add("show");
+  detail.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <span class="tag">${t.tag}</span>
+      <span class="mono" style="font-size:.7rem; color:${levelColor(t.level)}; border:1px solid ${levelColor(t.level)}55; padding:3px 9px; border-radius:20px;">${t.level}</span>
+    </div>
+    <h3 style="margin-top:10px;">${t.title}</h3>
+    <p class="lede">${t.body}</p>
+    <pre><code>${escapeHtml(t.code)}</code></pre>
+    <button class="btn primary small" id="sendToCompiler">Send to compiler →</button>`;
+  document.getElementById("sendToCompiler").addEventListener("click", ()=>{
+    codeCM.setValue(t.code);
+    goTo("compiler");
+  });
+  detail.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* =========================================================
+   AI TUTOR (rule-based, client-side)
+========================================================= */
+const TUTOR_KB = {
+  history: {label:"History", reply:"Python was created by Guido van Rossum and released in 1991. Its goals were readability and simplicity — indentation-based blocks and a small set of keywords instead of heavy symbols.", code:null},
+  variables: {label:"Variables", reply:"A variable is just a name pointing to a value in memory. Python figures out the type automatically — `x = 5` makes x an int, `x = \"5\"` makes it a str.", code:`x = 5\nx = "now a string"\nprint(x)`},
+  conditions: {label:"If / Else", reply:"Conditions use `if`, `elif`, and `else`, and Python uses indentation to mark each block instead of curly braces.", code:`n = 10\nif n % 2 == 0:\n    print("even")\nelse:\n    print("odd")`},
+  loops: {label:"Loops", reply:"`for` loops iterate over something iterable (a list, a range, a string). `while` loops repeat as long as a condition stays true. Use `break` to stop early and `continue` to skip ahead.", code:`for ch in "hi!":\n    print(ch)`},
+  lists: {label:"Lists", reply:"A list is an ordered, mutable collection written with square brackets. You can index (`lst[0]`), slice (`lst[1:3]`), and use list comprehensions to transform data in one line.", code:`squares = [n*n for n in range(5)]\nprint(squares)`},
+  strings: {label:"Strings", reply:"Strings are immutable — methods like `.upper()` or `.replace()` return a *new* string rather than modifying the original. Slicing works the same way as lists.", code:`s = "python"\nprint(s.capitalize())\nprint(s[:3])`},
+  numbers: {label:"Int & Float", reply:"`int` is a whole number, `float` has a decimal point. `/` always returns a float in Python 3, `//` floor-divides, and `%` gives the remainder.", code:`print(7 / 2)\nprint(7 // 2)\nprint(7 % 2)`},
+  functions: {label:"Functions", reply:"Define a function with `def name(params):` and return a value with `return`. Parameters can have default values, e.g. `def f(x, y=0):`.", code:`def add(a, b=0):\n    return a + b\nprint(add(3, 4))`},
+  dictionaries: {label:"Dictionaries", reply:"A dictionary stores key–value pairs with `{}`. Access a value with `d[key]`, and use `.get(key, default)` to avoid errors on missing keys.", code:`d = {"name": "Ada", "age": 30}\nprint(d.get("age"))\nprint(d.get("email", "none listed"))`},
+  errors: {label:"Errors & Exceptions", reply:"Python raises exceptions (like `IndexError`, `TypeError`, `ValueError`) when something goes wrong. Wrap risky code in `try`/`except` to handle it gracefully.", code:`try:\n    print(1/0)\nexcept ZeroDivisionError:\n    print("Can't divide by zero!")`},
+  tuples: {label:"Tuples", reply:"A tuple is like a list but immutable — once created, you can't change its items. That makes it useful for fixed groups of values, like coordinates.", code:`point = (3, 4)\nx, y = point\nprint(x, y)`},
+  sets: {label:"Sets", reply:"A set is an unordered collection of unique values — duplicates are dropped automatically. Great for membership checks and removing duplicates fast.", code:`nums = [1, 2, 2, 3, 3, 3]\nprint(set(nums))`},
+  oop: {label:"Classes & OOP", reply:"A class is a blueprint for objects. `__init__` sets up new instances, and methods defined inside the class act on `self`, the instance itself.", code:`class Dog:\n    def __init__(self, name):\n        self.name = name\n    def bark(self):\n        return f"{self.name} says woof!"\n\nd = Dog("Rex")\nprint(d.bark())`},
+  modules: {label:"Modules & Imports", reply:"A module is just a `.py` file of code you can reuse. `import module_name` brings it in, and `pip install package_name` installs third-party ones from PyPI.", code:`import math\nprint(math.sqrt(16))`},
+  lambda: {label:"Lambda Functions", reply:"A `lambda` is a small, unnamed function written in one line — handy for short throwaway logic, often passed into `sorted()`, `map()`, or `filter()`.", code:`square = lambda x: x * x\nprint(square(5))`},
+  generators: {label:"Generators", reply:"A generator is a function that uses `yield` instead of `return` to produce values one at a time, without building the whole sequence in memory.", code:`def countdown(n):\n    while n > 0:\n        yield n\n        n -= 1\n\nfor i in countdown(3):\n    print(i)`},
+  files: {label:"File Handling", reply:"Use `open(path, mode)` to work with files — `\"r\"` to read, `\"w\"` to write. The `with` statement closes the file automatically when you're done.", code:`with open("notes.txt", "w") as f:\n    f.write("Hello from PythonRank!")`},
+  booleans: {label:"Booleans & None", reply:"`True` and `False` are Python's boolean values (capitalized, unlike some languages). `None` represents the absence of a value — it's falsy in conditions.", code:`x = None\nprint(x is None)\nprint(bool(0), bool(1), bool(""))`},
+  casting: {label:"Type Casting", reply:"You can convert between types with `int()`, `float()`, `str()`, and `list()` — e.g. `int(\"5\")` turns text into a number so you can do math on it.", code:`age_text = "21"\nage = int(age_text)\nprint(age + 1)`},
+  games: {label:"Making Games", reply:"Every game — Snake included — is one loop: read input, update state, render the screen, repeat. You can build that loop with plain lists and print() to learn the logic, then move to the `pygame` library for real graphics and keyboard input.", code:`snake = [(2,3),(1,3),(0,3)]\nfood = (5,3)\nhead_x, head_y = snake[0]\nnew_head = (head_x + 1, head_y)  # move right one step\nif new_head == food:\n    snake = [new_head] + snake       # grow\nelse:\n    snake = [new_head] + snake[:-1]  # move\nprint(snake)`},
+  makeai: {label:"Building an AI", reply:"There are two honest paths. 1) Rule-based, like Jarvis here: match keywords in the input and return a canned response — zero extra libraries, runs anywhere, and it's exactly how this site's tutor works. 2) Real machine learning: `scikit-learn` for classic ML, `nltk` or `spaCy` for language processing, `TensorFlow`/`PyTorch` for deep learning, or an API (OpenAI, Anthropic) if you want an actual LLM doing the talking — those need `pip install` and won't run in a browser sandbox like this one, but the rule-based version below will run right here.", code:`def jarvis_reply(command):\n    command = command.lower()\n    if "your name" in command:\n        return "I'm JarvisMini, your Python assistant."\n    elif "python" in command:\n        return "Python is a high-level, readable language created in 1991."\n    elif "bye" in command:\n        return "Goodbye!"\n    else:\n        return "I don't know that one yet — add another elif to teach me."\n\ncommands = ["what's your name", "tell me about python", "bye"]\nfor cmd in commands:\n    print(">", cmd)\n    print(jarvis_reply(cmd))`},
+};
+const TUTOR_ALIASES = {
+  "int":"numbers","float":"numbers","integer":"numbers","division":"numbers","number":"numbers",
+  "for loop":"loops","while":"loops","for":"loops","iterate":"loops","iteration":"loops",
+  "if":"conditions","else":"conditions","elif":"conditions","condition":"conditions","branch":"conditions",
+  "list":"lists","array":"lists","comprehension":"lists","slice":"lists","slicing":"lists",
+  "string":"strings","str":"strings","text":"strings",
+  "dict":"dictionaries","dictionary":"dictionaries","hashmap":"dictionaries","key value":"dictionaries",
+  "function":"functions","def":"functions","method":"functions","parameter":"functions","argument":"functions","return":"functions",
+  "variable":"variables","var":"variables","assign":"variables",
+  "guido":"history","origin":"history","invented":"history","created":"history","when was python":"history",
+  "error":"errors","exception":"errors","try":"errors","except":"errors","traceback":"errors","crash":"errors",
+  "tuple":"tuples","immutable":"tuples",
+  "set":"sets","unique":"sets","duplicate":"sets",
+  "class":"oop","object":"oop","oop":"oop","inheritance":"oop","self":"oop","constructor":"oop","__init__":"oop",
+  "module":"modules","import":"modules","package":"modules","pip":"modules","library":"modules",
+  "lambda":"lambda","anonymous function":"lambda",
+  "generator":"generators","yield":"generators",
+  "file":"files","open(":"files","read file":"files","write file":"files",
+  "boolean":"booleans","true":"booleans","false":"booleans","none":"booleans","null":"booleans",
+  "cast":"casting","convert":"casting","type cast":"casting","parse":"casting",
+  "game":"games","games":"games","snake":"games","pygame":"games","game loop":"games","game dev":"games",
+  "ai":"makeai","artificial intelligence":"makeai","make ai":"makeai","build ai":"makeai","chatbot":"makeai",
+  "assistant":"makeai","jarvis":"makeai","machine learning":"makeai","nlp":"makeai","neural network":"makeai",
+};
+
+const SMALLTALK = [
+  {test:/\b(hi|hello|hey|yo|sup)\b/, reply:"Hey! I'm your Python tutor — ask me about any concept, like \"explain loops\" or \"what's a dictionary\", or just chat and I'll steer us back to Python when it's useful."},
+  {test:/how are you/, reply:"Running smoothly, thanks for asking! Ready to talk Python whenever you are."},
+  {test:/\b(thanks|thank you|thx)\b/, reply:"Anytime! Want to go deeper on that, or move to another topic?"},
+  {test:/\b(bye|goodbye|see ya|later)\b/, reply:"See you — come back any time you want to run through more Python."},
+  {test:/who are you|what are you/, reply:"I'm the built-in AI tutor for PythonRank — a focused Python coach that explains concepts and gives runnable examples."},
+  {test:/\bhelp\b/, reply:"Sure — tell me a topic (variables, loops, lists, strings, dictionaries, classes, errors…) or paste a bit of code and describe what's confusing about it."},
+];
+
+function renderTutorTopics(){
+  const wrap = document.getElementById("tutorTopics");
+  wrap.innerHTML = Object.entries(TUTOR_KB).map(([key,v])=>
+    `<button data-key="${key}">${v.label}</button>`).join("");
+  wrap.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      wrap.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      askTutor(b.dataset.key, true);
+    });
+  });
+}
+
+function addMsg(text, who, code){
+  const log = document.getElementById("chatLog");
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.innerHTML = text + (code ? `<pre><code>${escapeHtml(code)}</code></pre>` : "");
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function showThinking(logId){
+  const log = document.getElementById(logId);
+  const div = document.createElement("div");
+  div.className = "msg bot thinking";
+  div.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function thinkThen(logId, fn, delay){
+  const indicator = showThinking(logId);
+  setTimeout(()=>{
+    indicator.remove();
+    fn();
+  }, delay || 550 + Math.random()*300);
+}
+
+function findBestTopic(query){
+  const q = query.toLowerCase();
+  if(TUTOR_KB[q]) return q;
+  let bestKey = null, bestScore = 0;
+  for(const alias in TUTOR_ALIASES){
+    if(q.includes(alias)){
+      const key = TUTOR_ALIASES[alias];
+      const score = alias.length; // longer/more specific alias wins ties
+      if(score > bestScore){ bestScore = score; bestKey = key; }
+    }
+  }
+  if(bestKey) return bestKey;
+  for(const k in TUTOR_KB){
+    if(q.includes(k)) return k;
+  }
+  return null;
+}
+
+function askTutor(rawQuery, byKey){
+  let key = byKey ? rawQuery : null;
+  if(!byKey){
+    addMsg(escapeHtml(rawQuery), "user");
+    key = findBestTopic(rawQuery);
+  }
+  thinkThen("chatLog", ()=>{
+    if(!byKey && !key){
+      const small = SMALLTALK.find(s => s.test.test(rawQuery.toLowerCase()));
+      if(small){ addMsg(small.reply, "bot"); return; }
+    }
+    if(key && TUTOR_KB[key]){
+      const entry = TUTOR_KB[key];
+      addMsg(entry.reply, "bot", entry.code);
+    } else {
+      addMsg(`I focus on Python — try asking about <b>variables</b>, <b>loops</b>, <b>lists</b>, <b>strings</b>, <b>dictionaries</b>, <b>classes</b>, <b>functions</b>, <b>modules</b>, <b>errors</b>, or say hi and I'll point you in the right direction.`, "bot");
+    }
+  });
+}
+
+document.getElementById("chatSend").addEventListener("click", sendChat);
+document.getElementById("chatInput").addEventListener("keydown", e=>{ if(e.key==="Enter") sendChat(); });
+function sendChat(){
+  const input = document.getElementById("chatInput");
+  const val = input.value.trim();
+  if(!val) return;
+  askTutor(val, false);
+  input.value = "";
+}
+
+/* =========================================================
+   JARVIS VOICE ASSISTANT
+========================================================= */
+const jarvisOrb = document.getElementById("jarvisOrb");
+const jarvisStatus = document.getElementById("jarvisStatus");
+const jarvisTranscript = document.getElementById("jarvisTranscript");
+let jarvisGreeted = false;
+let jarvisMicStream = null;
+
+function greetJarvisOnce(){
+  if(jarvisGreeted) return;
+  jarvisGreeted = true;
+  jarvisSpeak("Systems online. Tap the core and ask me anything about Python.");
+}
+
+async function primeMicPermission(){
+  if(jarvisMicStream || !navigator.mediaDevices?.getUserMedia) return;
+  try{
+    jarvisMicStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    jarvisStatus.textContent = "microphone access denied";
+  }
+}
+
+function addJarvisMsg(text, who, code){
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.innerHTML = text + (code ? `<pre><code>${escapeHtml(code)}</code></pre>` : "");
+  jarvisTranscript.appendChild(div);
+  jarvisTranscript.scrollTop = jarvisTranscript.scrollHeight;
+}
+
+let jarvisVoices = [];
+function loadJarvisVoices(){
+  if(!("speechSynthesis" in window)) return;
+  jarvisVoices = window.speechSynthesis.getVoices();
+}
+if("speechSynthesis" in window){
+  loadJarvisVoices();
+  window.speechSynthesis.onvoiceschanged = loadJarvisVoices;
+}
+
+function jarvisSpeak(text){
+  if(!document.getElementById("jarvisVoiceToggle").checked) return;
+  if(!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/`/g, "").replace(/<[^>]+>/g, "");
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.rate = 1;
+  utter.pitch = 0.85;
+  const preferred = jarvisVoices.find(v => /male|daniel|google uk english male|david/i.test(v.name))
+    || jarvisVoices.find(v => v.lang && v.lang.startsWith("en"))
+    || jarvisVoices[0];
+  if(preferred) utter.voice = preferred;
+  utter.onstart = ()=> jarvisOrb.classList.add("speaking");
+  utter.onend = ()=> jarvisOrb.classList.remove("speaking");
+  window.speechSynthesis.speak(utter);
+}
+
+function askJarvis(rawQuery){
+  addJarvisMsg(escapeHtml(rawQuery), "user");
+  jarvisStatus.textContent = "thinking…";
+  const key = findBestTopic(rawQuery);
+  let replyText, replyCode = null;
+  if(key && TUTOR_KB[key]){
+    replyText = TUTOR_KB[key].reply;
+    replyCode = TUTOR_KB[key].code;
+  } else {
+    const small = SMALLTALK.find(s => s.test.test(rawQuery.toLowerCase()));
+    if(small){
+      replyText = small.reply;
+    } else {
+      replyText = "I focus on Python — try asking about variables, loops, lists, strings, dictionaries, classes, functions, or errors.";
+    }
+  }
+  setTimeout(()=>{
+    addJarvisMsg(replyText, "bot", replyCode);
+    jarvisSpeak(replyText);
+    jarvisStatus.textContent = "standing by";
+  }, 450);
+}
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let jarvisRecognition = null;
+let jarvisListening = false;
+
+if(SpeechRecognitionAPI){
+  jarvisRecognition = new SpeechRecognitionAPI();
+  jarvisRecognition.continuous = false;
+  jarvisRecognition.interimResults = false;
+  jarvisRecognition.lang = "en-US";
+
+  jarvisRecognition.onstart = ()=>{
+    jarvisListening = true;
+    jarvisOrb.classList.add("listening");
+    jarvisStatus.textContent = "listening…";
+  };
+  jarvisRecognition.onresult = (e)=>{
+    const text = e.results[0][0].transcript;
+    askJarvis(text);
+  };
+  jarvisRecognition.onerror = ()=>{
+    jarvisStatus.textContent = "didn't catch that — try again";
+  };
+  jarvisRecognition.onend = ()=>{
+    jarvisListening = false;
+    jarvisOrb.classList.remove("listening");
+    if(jarvisStatus.textContent === "listening…") jarvisStatus.textContent = "standing by";
+  };
+
+  jarvisOrb.addEventListener("click", async ()=>{
+    if(jarvisListening){ jarvisRecognition.stop(); return; }
+    if(!jarvisMicStream) await primeMicPermission();
+    window.speechSynthesis?.cancel();
+    jarvisOrb.classList.remove("speaking");
+    try{ jarvisRecognition.start(); }catch(e){ /* already starting */ }
+  });
+} else {
+  document.getElementById("jarvisUnsupported").style.display = "block";
+  jarvisOrb.addEventListener("click", ()=>{
+    document.getElementById("jarvisTextInput").focus();
+  });
+}
+
+document.getElementById("jarvisTextSend").addEventListener("click", sendJarvisText);
+document.getElementById("jarvisTextInput").addEventListener("keydown", e=>{ if(e.key==="Enter") sendJarvisText(); });
+function sendJarvisText(){
+  const input = document.getElementById("jarvisTextInput");
+  const val = input.value.trim();
+  if(!val) return;
+  askJarvis(val);
+  input.value = "";
+}
+
+/* =========================================================
+   AI INTERVIEWER
+========================================================= */
+const INTERVIEW_QUESTIONS = [
+  {q:"What's the difference between a list and a tuple in Python?", keywords:["mutable","immutable","tuple","list","change"],
+   note:"Model answer: lists are mutable (you can change, add, remove items) while tuples are immutable once created."},
+  {q:"Is Python statically or dynamically typed — and what does that mean?", keywords:["dynamic","runtime","type"],
+   note:"Model answer: Python is dynamically typed — a variable's type is checked at runtime and can change as it's reassigned."},
+  {q:"What's the difference between `==` and `is`?", keywords:["value","identity","object","reference"],
+   note:"Model answer: `==` compares values for equality; `is` compares object identity — whether two names point to the exact same object in memory."},
+  {q:"Explain what a list comprehension is, in one sentence.", keywords:["comprehension","for","list","concise","loop"],
+   note:"Model answer: a list comprehension builds a new list in one line by looping over an iterable and optionally filtering, e.g. `[x*x for x in range(5) if x%2==0]`."},
+  {q:"What's the difference between `.append()` and `.extend()` on a list?", keywords:["append","extend","single","iterable","multiple","one"],
+   note:"Model answer: `.append(x)` adds a single item x to the end; `.extend(iterable)` adds every item from another iterable individually."},
+  {q:"What does the `self` parameter mean inside a class method?", keywords:["instance","self","class","reference","object"],
+   note:"Model answer: `self` refers to the specific instance the method is being called on, letting the method read and modify that instance's own attributes."},
+  {q:"What's the purpose of a `try` / `except` block?", keywords:["exception","error","handle","try","except","crash"],
+   note:"Model answer: it lets you catch runtime exceptions and handle them gracefully instead of letting the program crash."},
+  {q:"How would you check if a key exists in a dictionary?", keywords:["in","get","key","dictionary"],
+   note:"Model answer: use `key in my_dict`, or `my_dict.get(key, default)` to fetch it safely without raising a KeyError."},
+];
+
+const CODING_PROBLEMS = [
+  {title:"Factorial", funcName:"factorial",
+    prompt:"Write a function <code>factorial(n)</code> that returns n! (the product of every positive integer ≤ n). <code>factorial(0)</code> should return 1.",
+    starter:"def factorial(n):\n    # your code here\n    pass\n",
+    testsPy:"[((0,), 1), ((1,), 1), ((5,), 120), ((6,), 720)]"},
+  {title:"Reverse a String", funcName:"reverse_string",
+    prompt:"Write a function <code>reverse_string(s)</code> that returns the string <code>s</code> reversed.",
+    starter:"def reverse_string(s):\n    # your code here\n    pass\n",
+    testsPy:"[(('hello',), 'olleh'), (('Python',), 'nohtyP'), (('',), '')]"},
+  {title:"Palindrome Check", funcName:"is_palindrome",
+    prompt:"Write a function <code>is_palindrome(s)</code> that returns True if <code>s</code> reads the same forwards and backwards (case-insensitive), else False.",
+    starter:"def is_palindrome(s):\n    # your code here\n    pass\n",
+    testsPy:"[(('racecar',), True), (('Python',), False), (('Level',), True)]"},
+  {title:"Find the Maximum", funcName:"find_max",
+    prompt:"Write a function <code>find_max(nums)</code> that returns the largest number in a non-empty list — without using the built-in <code>max()</code>.",
+    starter:"def find_max(nums):\n    # your code here\n    pass\n",
+    testsPy:"[(([3,1,4,1,5,9,2,6],), 9), (([-5,-1,-9],), -1), (([7],), 7)]"},
+  {title:"Count Vowels", funcName:"count_vowels",
+    prompt:"Write a function <code>count_vowels(s)</code> that returns how many vowels (a, e, i, o, u — case-insensitive) are in the string <code>s</code>.",
+    starter:"def count_vowels(s):\n    # your code here\n    pass\n",
+    testsPy:"[(('Python',), 1), (('Interview',), 4), (('xyz',), 0)]"},
+  {title:"Sum of Even Numbers", funcName:"sum_evens",
+    prompt:"Write a function <code>sum_evens(nums)</code> that returns the sum of all even numbers in the list <code>nums</code>.",
+    starter:"def sum_evens(nums):\n    # your code here\n    pass\n",
+    testsPy:"[(([1,2,3,4,5,6],), 12), (([1,3,5],), 0), (([],), 0)]"},
+];
+
+let interviewQueue = [];
+let interviewQIdx = 0;
+let interviewCorrectCount = 0;
+let currentProblem = null;
+
+function pickRandom(arr, n){
+  return [...arr].sort(()=>Math.random()-0.5).slice(0, n);
+}
+
+function addInterviewMsg(text, who){
+  const log = document.getElementById("interviewLog");
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.innerHTML = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById("startInterviewBtn").addEventListener("click", startInterview);
+document.getElementById("newInterviewBtn").addEventListener("click", startInterview);
+
+function startInterview(){
+  document.getElementById("interviewIntro").style.display = "none";
+  document.getElementById("interviewChallenge").style.display = "none";
+  document.getElementById("interviewChat").style.display = "block";
+  document.getElementById("interviewLog").innerHTML = "";
+  document.getElementById("interviewInputRow").style.display = "flex";
+  interviewQueue = pickRandom(INTERVIEW_QUESTIONS, 3);
+  interviewQIdx = 0;
+  interviewCorrectCount = 0;
+  addInterviewMsg("Let's get started — I'll ask a few concept questions, then hand you a coding problem regardless of how they go.", "bot");
+  askNextInterviewQuestion();
+}
+
+function askNextInterviewQuestion(){
+  if(interviewQIdx >= interviewQueue.length){
+    thinkThen("interviewLog", ()=>{
+      const total = interviewQueue.length;
+      addInterviewMsg(`Concept round done — <b>${interviewCorrectCount}/${total} correct</b>. Either way, let's see you code — pulling up a problem…`, "bot");
+      document.getElementById("interviewInputRow").style.display = "none";
+      startChallenge();
+    });
+    return;
+  }
+  const item = interviewQueue[interviewQIdx];
+  thinkThen("interviewLog", ()=>{
+    addInterviewMsg(`<b>Q${interviewQIdx+1}.</b> ${item.q}`, "bot");
+  });
+}
+document.getElementById("interviewAnswerSend").addEventListener("click", submitInterviewAnswer);
+document.getElementById("interviewAnswerInput").addEventListener("keydown", e=>{ if(e.key==="Enter") submitInterviewAnswer(); });
+
+function submitInterviewAnswer(){
+  const input = document.getElementById("interviewAnswerInput");
+  const val = input.value.trim();
+  if(!val) return;
+  addInterviewMsg(escapeHtml(val), "user");
+  input.value = "";
+  const item = interviewQueue[interviewQIdx];
+  const lower = val.toLowerCase();
+  const hits = item.keywords.filter(k=>lower.includes(k));
+  const need = Math.ceil(item.keywords.length * 0.6);
+  let verdict, bonus;
+  if(hits.length >= need){
+    verdict = `<span style="color:var(--green); font-weight:700;">✓ Correct.</span>`;
+    bonus = 5;
+    interviewCorrectCount++;
+  } else if(hits.length > 0){
+    verdict = `<span style="color:var(--yellow); font-weight:700;">△ Partially correct.</span>`;
+    bonus = 3;
+  } else {
+    verdict = `<span style="color:var(--red); font-weight:700;">✗ Wrong.</span>`;
+    bonus = 1;
+  }
+  STATE.score += bonus;
+  saveState();
+  renderStatus();
+  thinkThen("interviewLog", ()=>{
+    addInterviewMsg(`${verdict} ${item.note} <span class="mono" style="color:var(--yellow)">(+${bonus})</span>`, "bot");
+    interviewQIdx++;
+    askNextInterviewQuestion();
+  });
+}
+
+function startChallenge(){
+  currentProblem = CODING_PROBLEMS[Math.floor(Math.random()*CODING_PROBLEMS.length)];
+  document.getElementById("challengeBrief").innerHTML =
+    `<span class="tag">coding challenge</span><h3 style="margin-top:8px;">${currentProblem.title}</h3><p class="lede">${currentProblem.prompt}</p>`;
+  document.getElementById("challengeFuncLabel").textContent = currentProblem.funcName + ".py";
+  interviewCM.setValue(currentProblem.starter);
+  document.getElementById("interviewOutputBox").innerHTML = `<span class="muted-line">Run your solution to see test results here.</span>`;
+  document.getElementById("interviewScoreTag").textContent = "";
+  document.getElementById("interviewChallenge").style.display = "block";
+  document.getElementById("interviewChallenge").scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+document.getElementById("interviewResetBtn").addEventListener("click", ()=>{
+  if(currentProblem) interviewCM.setValue(currentProblem.starter);
+});
+
+document.getElementById("interviewRunBtn").addEventListener("click", runInterviewTests);
+
+async function runInterviewTests(){
+  if(!pyodide || !currentProblem) return;
+  const box = document.getElementById("interviewOutputBox");
+  box.innerHTML = `<span class="muted-line">Running tests…</span>`;
+  const studentCode = interviewCM.getValue();
+  const harness = `
+__pr_results = []
+__pr_passed = 0
+tests = ${currentProblem.testsPy}
+__pr_total = len(tests)
+for args, expected in tests:
+    try:
+        got = ${currentProblem.funcName}(*args)
+        ok = got == expected
+    except Exception as e:
+        got = "Error: " + str(e)
+        ok = False
+    if ok:
+        __pr_passed += 1
+    __pr_results.append((args, expected, got, ok))
+`;
+  const fullSource = studentCode + "\n\n" + harness;
+  try{
+    pyodide.globals.set("__pr_i_source", fullSource);
+    const wrapper = `
+import sys, io, traceback
+__pr_ns = {}
+__pr_i_buf = io.StringIO()
+__pr_i_old_stdout = sys.stdout
+sys.stdout = __pr_i_buf
+__pr_i_error = None
+try:
+    exec(compile(__pr_i_source, "<interview>", "exec"), __pr_ns)
+except Exception:
+    __pr_i_error = traceback.format_exc()
+sys.stdout = __pr_i_old_stdout
+__pr_i_output = __pr_i_buf.getvalue()
+__pr_i_results = __pr_ns.get("__pr_results", [])
+__pr_i_passed = __pr_ns.get("__pr_passed", 0)
+__pr_i_total = __pr_ns.get("__pr_total", 0)
+`;
+    await pyodide.runPythonAsync(wrapper);
+    const err = pyodide.globals.get("__pr_i_error");
+    const output = pyodide.globals.get("__pr_i_output");
+    const passed = pyodide.globals.get("__pr_i_passed");
+    const total = pyodide.globals.get("__pr_i_total");
+    const resultsProxy = pyodide.globals.get("__pr_i_results");
+    const results = resultsProxy && resultsProxy.toJs ? resultsProxy.toJs() : [];
+
+    if(err){
+      box.innerHTML = `<span class="err">${escapeHtml(err)}</span>`;
+      document.getElementById("interviewScoreTag").textContent = "0 / " + (total || "?");
+      return;
+    }
+
+    let html = "";
+    if(output) html += `<span class="muted-line">${escapeHtml(output)}</span><br>`;
+    results.forEach(r=>{
+      const [args, expected, got, ok] = r;
+      html += `<div style="margin-bottom:5px;">
+        <span class="${ok?'ok':'err'}">${ok?'✓ PASS':'✗ FAIL'}</span>
+        <span class="muted-line"> in=${JSON.stringify(args)} expected=${JSON.stringify(expected)} got=${JSON.stringify(got)}</span>
+      </div>`;
+    });
+    const allPassed = passed === total;
+    html += `<div style="margin-top:8px;"><b style="color:${allPassed?"var(--green)":"var(--yellow)"}">${passed} / ${total} tests passed</b></div>`;
+    box.innerHTML = html;
+    document.getElementById("interviewScoreTag").textContent = passed + " / " + total;
+
+    const bonus = passed * 5 + (allPassed ? 10 : 0);
+    STATE.score += bonus;
+    if(allPassed) unlockAchievement("interview_ace");
+    saveState();
+    renderStatus();
+  }catch(e){
+    box.innerHTML = `<span class="err">${escapeHtml(String(e))}</span>`;
+  }
+}
+
+/* =========================================================
+   RANK TAB
+========================================================= */
+function renderBadges(){
+  const grid = document.getElementById("badgeGrid");
+  grid.innerHTML = ACHIEVEMENTS.map(a=>{
+    const unlocked = STATE.achievements.includes(a.id);
+    return `<div class="badge ${unlocked?"unlocked":""}">
+      <span class="icon">${a.icon}</span>
+      <div class="name">${a.name}</div>
+      <div class="desc">${a.desc}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderRankTab(){
+  document.getElementById("rankScore").textContent = STATE.score;
+  document.getElementById("rankStreak").textContent = STATE.bestStreak;
+  document.getElementById("rankTier").textContent = currentTier(STATE.score).name;
+  renderLadder("ladderList2");
+  renderBadges();
+  renderRankProSection();
+}
+
+function renderRankProSection(){
+  const box = document.getElementById("rankProSection");
+  if(isPro()){
+    box.innerHTML = `
+      <div class="rank-pro-teaser is-pro">
+        <div>
+          <span class="pro-badge">💎 PRO</span>
+          <span class="mono" style="margin-left:10px; font-size:.82rem; color:var(--muted);">
+            ${STATE.proPlan === "yearly" ? "Yearly plan" : "Monthly plan"} · Status: <b style="color:var(--green);">Active</b>
+          </span>
+        </div>
+        <button class="btn ghost small" data-goto="pro">Manage plan →</button>
+      </div>`;
+  } else {
+    box.innerHTML = `
+      <div class="rank-pro-teaser">
+        <div>
+          <b>You're on the Free plan.</b>
+          <span class="mono" style="margin-left:8px; font-size:.82rem; color:var(--muted);">Unlock unlimited AI Tutor, mock interviews, analytics & more.</span>
+        </div>
+        <button class="btn primary small" data-goto="pro">💎 Upgrade to Pro</button>
+      </div>`;
+  }
+  box.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click", ()=>goTo(b.dataset.goto)));
+}
+
+/* =========================================================
+   PYTHONRANK PRO
+========================================================= */
+function isPro(){ return STATE.subscriptionStatus === "pro"; }
+
+function renderProBadgeSlots(){
+  document.querySelectorAll(".pro-badge-slot").forEach(el=>{
+    el.innerHTML = isPro() ? `<span class="pro-badge">💎 PRO</span>` : "";
+  });
+}
+
+function renderProTab(){
+  const banner = document.getElementById("proStatusBanner");
+  const pricing = document.getElementById("proPricing");
+  if(isPro()){
+    pricing.style.display = "none";
+    banner.innerHTML = `
+      <div class="pro-status-banner">
+        <div>
+          <span class="pro-badge">💎 PRO</span>
+          <div style="margin-top:8px; font-family:var(--mono); font-size:.9rem;">
+            Current plan: <b style="color:var(--yellow);">${STATE.proPlan === "yearly" ? "Yearly (₹1,499/yr)" : "Monthly (₹149/mo)"}</b> · Status: <b style="color:var(--green);">Active</b>
+          </div>
+        </div>
+        <button class="btn ghost small" id="proDowngradeBtn">Cancel (demo)</button>
+      </div>`;
+    document.getElementById("proDowngradeBtn").addEventListener("click", ()=> setSubscription("free"));
+  } else {
+    pricing.style.display = "block";
+    banner.innerHTML = "";
+  }
+
+  document.getElementById("proCompareTable").innerHTML = `
+    <div class="card">
+      <h4>Free</h4>
+      <ul>
+        <li>Basic AI Tutor</li>
+        <li>Limited Interview Practice</li>
+        <li>Basic Quizzes</li>
+        <li>Basic Coding Challenges</li>
+        <li>Basic Progress Tracking</li>
+        <li>Basic Projects</li>
+        <li>Ads</li>
+      </ul>
+    </div>
+    <div class="card pro-col">
+      <h4>💎 Pro</h4>
+      <ul>
+        <li>Unlimited AI Tutor</li>
+        <li>Unlimited Interview Practice</li>
+        <li>Advanced Quizzes</li>
+        <li>Advanced Coding Challenges</li>
+        <li>Detailed Analytics</li>
+        <li>Certificates</li>
+        <li>Advanced Projects</li>
+        <li>No Ads</li>
+        <li>Exclusive Roadmaps</li>
+      </ul>
+    </div>`;
+
+  renderProBadgeSlots();
+}
+
+/* ---- Mock checkout ----
+   Replace the body of startCheckout() with a real Razorpay/Stripe
+   call when you're ready to accept real payments. On a successful
+   payment callback from that provider, call setSubscription("pro", plan)
+   below — everything else (badges, banners, rank teaser) already
+   reacts to STATE.subscriptionStatus automatically. */
+function startCheckout(plan){
+  // TODO: replace this mock with a real Razorpay/Stripe checkout.
+  // Razorpay example shape:
+  //   const rzp = new Razorpay({ key: "...", amount: plan==="yearly"?149900:14900,
+  //     handler: () => setSubscription("pro", plan) });
+  //   rzp.open();
+  setSubscription("pro", plan);
+  closeUpgradeModal();
+}
+
+function setSubscription(status, plan){
+  STATE.subscriptionStatus = status;
+  STATE.proPlan = status === "pro" ? (plan || STATE.proPlan || "monthly") : null;
+  saveState();
+  renderProTab();
+  renderRankProSection();
+  renderProBadgeSlots();
+}
+
+document.querySelectorAll("#proPricing [data-plan]").forEach(b=>{
+  b.addEventListener("click", ()=> startCheckout(b.dataset.plan));
+});
+document.getElementById("proTestFreeBtn").addEventListener("click", ()=> setSubscription("free"));
+document.getElementById("proTestProBtn").addEventListener("click", ()=> setSubscription("pro", "monthly"));
+
+/* ---- Reusable upgrade modal ----
+   Call openUpgradeModal() from anywhere in the app (e.g. a future
+   locked-feature click) to show this same modal. */
+function openUpgradeModal(){
+  document.getElementById("upgradeModalOverlay").classList.add("show");
+}
+function closeUpgradeModal(){
+  document.getElementById("upgradeModalOverlay").classList.remove("show");
+}
+document.getElementById("upgradeModalClose").addEventListener("click", closeUpgradeModal);
+document.getElementById("upgradeModalLater").addEventListener("click", closeUpgradeModal);
+document.getElementById("upgradeModalCta").addEventListener("click", ()=> startCheckout("monthly"));
+document.getElementById("upgradeModalOverlay").addEventListener("click", (e)=>{
+  if(e.target.id === "upgradeModalOverlay") closeUpgradeModal();
+});
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Reset all score, streaks and achievements? This can't be undone.")){
+    STATE = structuredClone(DEFAULT_STATE);
+    saveState();
+    renderStatus();
+    renderRankTab();
+    renderProTab();
+    buildQuizPool();
+    renderQuestion();
+  }
+});
+
+/* =========================================================
+   HOME TERMINAL TYPE ANIMATION
+========================================================= */
+function typeAnimation(){
+  const target = document.getElementById("typeTarget");
+  const outEl = document.getElementById("typeOut");
+  const text = "import pythonrank";
+  let i = 0;
+  target.textContent = "";
+  outEl.innerHTML = "";
+  const interval = setInterval(()=>{
+    target.textContent = text.slice(0, i+1);
+    i++;
+    if(i >= text.length){
+      clearInterval(interval);
+      setTimeout(()=>{
+        outEl.innerHTML =
+          `<div class="line out">&gt; Loading modules: history, syntax, loops, lists…</div>
+           <div class="line out">&gt; Ready. Current rank: ${currentTier(STATE.score).name}</div>`;
+      }, 350);
+    }
+  }, 65);
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+renderStatus();
+restoreCodeDraft();
+renderQuizFilters();
+buildQuizPool();
+renderQuestion();
+renderLearnLevelFilters();
+renderTopicGrid();
+renderTutorTopics();
+addMsg(`Hi! I'm your Python tutor. Pick a topic on the left, or type a question.`, "bot");
+addJarvisMsg(`Systems online. Tap the core and ask me anything about Python.`, "bot");
+typeAnimation();
+</script>
+</body>
+</html>
